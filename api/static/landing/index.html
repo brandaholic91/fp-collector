@@ -3,47 +3,343 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>fp-collector demo</title>
+  <title>fp-collector :: first-party data pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0F172A',
+            surface: '#1E293B',
+            elevated: '#334155',
+            outline: '#475569',
+            muted: '#272F42',
+            fg: '#F8FAFC',
+            dim: '#94A3B8',
+            faint: '#64748B',
+            run: '#22C55E',
+            pulse: '#4ADE80',
+            warn: '#F59E0B',
+            err: '#EF4444',
+          },
+          fontFamily: {
+            display: ['"Share Tech Mono"', 'ui-monospace', 'monospace'],
+            mono: ['"Fira Code"', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #111; }
-    .hero { max-width: 720px; margin: 80px auto; text-align: center; padding: 0 24px; }
-    h1 { font-size: 2.5rem; margin-bottom: 16px; }
-    p  { font-size: 1.1rem; color: #555; margin-bottom: 32px; }
-    .cta { display: inline-block; background: #2563eb; color: #fff;
-           padding: 14px 32px; border-radius: 8px; font-size: 1rem;
-           cursor: pointer; border: none; text-decoration: none; }
-    .cta:hover { background: #1d4ed8; }
-    .consent-banner { position: fixed; bottom: 0; left: 0; right: 0;
-                      background: #1e1e1e; color: #fff; padding: 16px 24px;
-                      display: flex; align-items: center; gap: 16px;
-                      font-size: 0.9rem; }
-    .consent-banner button { background: #2563eb; color: #fff; border: none;
-                             padding: 8px 20px; border-radius: 6px; cursor: pointer; }
-    #banner { display: none; }
+    :root { color-scheme: dark; }
+    body { font-family: 'Fira Code', ui-monospace, monospace; }
+    .font-display { font-family: 'Share Tech Mono', ui-monospace, monospace; letter-spacing: 0.02em; }
+    .glow-run   { text-shadow: 0 0 20px rgba(34, 197, 94, 0.55), 0 0 40px rgba(34, 197, 94, 0.25); }
+    .glow-dim   { text-shadow: 0 0 14px rgba(74, 222, 128, 0.35); }
+    .bracket::before { content: "[ "; color: #475569; }
+    .bracket::after  { content: " ]"; color: #475569; }
+    .cursor::after { content: "▋"; margin-left: 4px; animation: blink 1.1s steps(2, end) infinite; color: #22C55E; }
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      background-position: -1px -1px;
+    }
+    @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      50%       { opacity: 0.7; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    }
+    .live-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      .cursor::after, .live-dot { animation: none; }
+    }
   </style>
 </head>
-<body>
-  <div class="hero">
-    <h1>First-Party Data Demo</h1>
-    <p>Saját collector, saját pipeline — teljes kontroll az adatok felett.</p>
-    <button class="cta" id="cta-btn" onclick="track('cta_click', {label: 'hero_cta'})">
-      Érdekel, tudj meg többet
-    </button>
-  </div>
+<body class="bg-bg text-fg min-h-screen flex flex-col antialiased">
+  <header class="max-w-5xl w-full mx-auto px-6 pt-8 pb-4 flex items-center justify-between relative z-10 border-b border-muted">
+    <a href="/" class="font-display text-lg text-fg flex items-center gap-2">
+      <span class="text-run">fp</span><span class="text-dim">::</span>collector
+    </a>
+    <nav class="flex gap-6 text-sm">
+      <a href="/dashboard?utm_source=landing&utm_medium=header&utm_campaign=portfolio_demo"
+         onclick="track('cta_click', {label: 'header_dashboard'})"
+         class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">dashboard</a>
+      <a href="https://github.com/placeholder/fp-collector"
+         onclick="track('cta_click', {label: 'header_github'})"
+         class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">forráskód</a>
+    </nav>
+  </header>
 
-  <div id="banner" class="consent-banner">
-    <span>Ez az oldal saját analytics rendszert használ a felhasználói interakciók mérésére.</span>
-    <button onclick="grantConsent(); document.getElementById('banner').style.display='none'">
-      Elfogadom
+  <main class="max-w-5xl w-full mx-auto px-6 flex-1 relative">
+    <section class="py-20 md:py-32 relative grid-bg">
+      <div class="relative z-10 max-w-3xl">
+        <div class="inline-flex items-center gap-2 text-xs text-dim mb-8 font-mono">
+          <span class="w-2 h-2 rounded-full bg-run live-dot"></span>
+          <span class="uppercase tracking-widest">pipeline:live</span>
+          <span class="text-faint">//</span>
+          <span>saját méréssel</span>
+        </div>
+        <h1 class="font-display text-4xl md:text-6xl leading-[1.1] text-fg">
+          <span class="text-run glow-run">first_party_data</span><br>
+          <span class="text-fg">pipeline, <span class="text-dim">saját</span></span><br>
+          <span class="text-fg">kezedben <span class="cursor"></span></span>
+        </h1>
+        <p class="mt-10 text-dim leading-relaxed max-w-xl">
+          Self-hosted MarTech referencia: collector API, PostgreSQL, n8n feldolgozás és dashboard. Minden komponens a saját infrastruktúrádon fut — zero SaaS-függőség, zero third-party data leak.
+        </p>
+        <div class="mt-12 flex flex-col sm:flex-row gap-3">
+          <a href="/dashboard?utm_source=landing&utm_medium=hero_cta&utm_campaign=portfolio_demo"
+             onclick="track('cta_click', {label: 'hero_dashboard'})"
+             class="group inline-flex items-center justify-center gap-2 bg-run/10 hover:bg-run/20 border border-run text-run hover:text-pulse px-5 py-3 min-h-[44px] font-mono text-sm uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-run focus-visible:ring-offset-2 focus-visible:ring-offset-bg rounded-sm">
+            <span class="text-outline group-hover:text-run transition-colors">[</span>
+            <span>megnyitás</span>
+            <span class="text-run">→</span>
+            <span class="text-outline group-hover:text-run transition-colors">]</span>
+          </a>
+          <a href="https://github.com/placeholder/fp-collector"
+             onclick="track('cta_click', {label: 'hero_github'})"
+             class="group inline-flex items-center justify-center gap-2 bg-surface hover:bg-elevated border border-outline hover:border-dim text-dim hover:text-fg px-5 py-3 min-h-[44px] font-mono text-sm uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dim focus-visible:ring-offset-2 focus-visible:ring-offset-bg rounded-sm">
+            <span class="text-outline">[</span>
+            <span>forráskód</span>
+            <span class="text-outline">]</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-12 md:py-16" aria-labelledby="live-metrics-heading">
+      <div class="flex items-center gap-3 mb-8">
+        <span class="font-mono text-run text-sm">&gt;</span>
+        <h2 id="live-metrics-heading" class="font-display text-sm text-dim uppercase tracking-widest">live_metrics</h2>
+        <span class="flex-1 h-px bg-muted"></span>
+        <span class="text-faint text-xs font-mono" id="metrics-timestamp">//</span>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-surface border border-outline rounded-sm p-5">
+          <div class="text-xs font-mono text-faint uppercase tracking-widest">ingested</div>
+          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-live="ingested">—</div>
+          <div class="mt-1 text-xs text-dim font-mono">összes event</div>
+        </div>
+        <div class="bg-surface border border-outline rounded-sm p-5">
+          <div class="text-xs font-mono text-faint uppercase tracking-widest">processed</div>
+          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-live="processed">—</div>
+          <div class="mt-1 text-xs text-dim font-mono">n8n által feldolgozva</div>
+        </div>
+        <div class="bg-surface border border-outline rounded-sm p-5">
+          <div class="text-xs font-mono text-faint uppercase tracking-widest">leads</div>
+          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-live="leads">—</div>
+          <div class="mt-1 text-xs text-dim font-mono">form_submit eventekből</div>
+        </div>
+        <div class="bg-surface border border-outline rounded-sm p-5">
+          <div class="text-xs font-mono text-faint uppercase tracking-widest">status</div>
+          <div class="mt-3 font-display text-3xl md:text-4xl flex items-center gap-2" data-live="status">
+            <span class="text-dim">—</span>
+          </div>
+          <div class="mt-1 text-xs text-dim font-mono" data-live="status-detail">ellenőrzés...</div>
+        </div>
+      </div>
+
+      <p class="mt-6 text-xs text-faint font-mono">
+        &gt; a számok tartalmazzák a saját látogatásodat is — a page_view event pár másodpercen belül megjelenik a dashboardon.
+      </p>
+    </section>
+
+    <section class="py-12 md:py-16" aria-labelledby="how-it-works-heading">
+      <div class="flex items-center gap-3 mb-8">
+        <span class="font-mono text-run text-sm">&gt;</span>
+        <h2 id="how-it-works-heading" class="font-display text-sm text-dim uppercase tracking-widest">pipeline</h2>
+        <span class="flex-1 h-px bg-muted"></span>
+      </div>
+
+      <div class="bg-surface border border-outline rounded-sm p-6 md:p-8">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-center font-mono text-sm" aria-label="Adatfolyam: Browser → Collector API → PostgreSQL → n8n → Dashboard">
+          <div class="bg-bg border border-muted rounded-sm px-3 py-4">
+            <div class="text-faint text-[10px] uppercase tracking-widest">01</div>
+            <div class="mt-2 text-fg">browser</div>
+          </div>
+          <div class="bg-bg border border-muted rounded-sm px-3 py-4">
+            <div class="text-faint text-[10px] uppercase tracking-widest">02</div>
+            <div class="mt-2 text-fg">collector_api</div>
+          </div>
+          <div class="bg-bg border border-muted rounded-sm px-3 py-4">
+            <div class="text-faint text-[10px] uppercase tracking-widest">03</div>
+            <div class="mt-2 text-fg">postgresql</div>
+          </div>
+          <div class="bg-bg border border-muted rounded-sm px-3 py-4">
+            <div class="text-faint text-[10px] uppercase tracking-widest">04</div>
+            <div class="mt-2 text-fg">n8n_workflow</div>
+          </div>
+          <div class="bg-bg border border-muted rounded-sm px-3 py-4">
+            <div class="text-faint text-[10px] uppercase tracking-widest">05</div>
+            <div class="mt-2 text-fg">dashboard</div>
+          </div>
+        </div>
+
+        <div class="mt-8 space-y-5 text-sm leading-relaxed">
+          <div class="grid grid-cols-[auto_1fr] gap-4">
+            <span class="text-run font-mono shrink-0">01 &gt;</span>
+            <p class="text-dim"><span class="text-fg">Kliens-oldali</span> <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">tracker.js</code> minden user interakciót (page_view, cta_click, form_submit) strukturált event objektumba csomagol és POST-tolja a collector API-nak.</p>
+          </div>
+          <div class="grid grid-cols-[auto_1fr] gap-4">
+            <span class="text-run font-mono shrink-0">02 &gt;</span>
+            <p class="text-dim"><span class="text-fg">FastAPI collector endpoint</span> szigorúan validálja, consent alapján szűri, és idempotensen tárolja a <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">raw_events</code> táblában (<code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">ON CONFLICT DO NOTHING</code>).</p>
+          </div>
+          <div class="grid grid-cols-[auto_1fr] gap-4">
+            <span class="text-run font-mono shrink-0">03 &gt;</span>
+            <p class="text-dim"><span class="text-fg">n8n workflow</span> 30s-enként dolgoz fel új sorokat: dedup, source/medium enrichment, <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">form_submit</code> → <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">leads</code> routing. Dead-letter a hibás rekordoknak.</p>
+          </div>
+          <div class="grid grid-cols-[auto_1fr] gap-4">
+            <span class="text-run font-mono shrink-0">04 &gt;</span>
+            <p class="text-dim"><span class="text-fg">Dashboard</span> 4 REST endpointról olvassa az aggregált adatokat: pipeline health, conversion funnel, daily time-series, UTM breakdown leads számmal.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-12 md:py-16" aria-labelledby="contact-heading">
+      <div class="flex items-center gap-3 mb-8">
+        <span class="font-mono text-run text-sm">&gt;</span>
+        <h2 id="contact-heading" class="font-display text-sm text-dim uppercase tracking-widest">kapcsolat</h2>
+        <span class="flex-1 h-px bg-muted"></span>
+      </div>
+
+      <div class="bg-surface border border-outline rounded-sm p-6 md:p-8 max-w-2xl">
+        <p class="text-xs text-faint font-mono mb-6">
+          &gt; demo form — a beküldés egy <code class="text-run">form_submit</code> eventet generál → lead-ként jelenik meg a dashboardon.
+        </p>
+        <form id="contact-form" class="space-y-4" onsubmit="handleContactSubmit(event)" novalidate>
+          <div>
+            <label for="contact-name" class="block text-xs font-mono text-dim uppercase tracking-widest mb-1.5">név</label>
+            <input type="text" id="contact-name" name="name" required autocomplete="name"
+                   class="w-full bg-bg border border-outline text-fg placeholder-faint px-3 py-2 min-h-[44px] font-mono text-sm rounded-sm focus:outline-none focus:border-run transition-colors">
+          </div>
+          <div>
+            <label for="contact-email" class="block text-xs font-mono text-dim uppercase tracking-widest mb-1.5">email</label>
+            <input type="email" id="contact-email" name="email" required autocomplete="email" inputmode="email"
+                   class="w-full bg-bg border border-outline text-fg placeholder-faint px-3 py-2 min-h-[44px] font-mono text-sm rounded-sm focus:outline-none focus:border-run transition-colors">
+          </div>
+          <div>
+            <label for="contact-message" class="block text-xs font-mono text-dim uppercase tracking-widest mb-1.5">üzenet</label>
+            <textarea id="contact-message" name="message" required rows="4"
+                      class="w-full bg-bg border border-outline text-fg placeholder-faint px-3 py-2 font-mono text-sm rounded-sm focus:outline-none focus:border-run transition-colors"></textarea>
+          </div>
+          <button type="submit"
+                  class="group inline-flex items-center justify-center gap-2 bg-run/10 hover:bg-run/20 border border-run text-run hover:text-pulse px-5 py-3 min-h-[44px] font-mono text-sm uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-run focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm">
+            <span class="text-outline group-hover:text-run transition-colors">[</span>
+            <span>küldés</span>
+            <span class="text-run">→</span>
+            <span class="text-outline group-hover:text-run transition-colors">]</span>
+          </button>
+        </form>
+
+        <div id="contact-success" class="hidden items-start gap-3 py-4" role="status" aria-live="polite">
+          <span class="text-run font-mono mt-0.5">✓</span>
+          <div>
+            <div class="text-fg font-mono text-sm">form_submit event elküldve</div>
+            <div class="mt-1 text-xs text-dim font-mono">&gt; 30 másodpercen belül megjelenik a dashboard leads táblájában (n8n poll).</div>
+          </div>
+        </div>
+
+        <p class="mt-6 text-xs text-faint font-mono leading-relaxed">
+          &gt; valódi kapcsolatfelvétel: lásd a footerben lévő linkeket.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl w-full mx-auto px-6 py-10 mt-8 border-t border-muted">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      <div>
+        <div class="font-display text-fg">holik_balazs</div>
+        <div class="text-xs text-dim font-mono mt-1">// marketing engineer</div>
+      </div>
+      <nav class="flex gap-5 text-sm font-mono" aria-label="Kapcsolat linkek">
+        <a href="https://github.com/placeholder"
+           onclick="track('cta_click', {label: 'footer_github'})"
+           class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">github</a>
+        <a href="https://www.linkedin.com/in/placeholder"
+           onclick="track('cta_click', {label: 'footer_linkedin'})"
+           class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">linkedin</a>
+        <a href="mailto:holikbalazs@gmail.com"
+           onclick="track('cta_click', {label: 'footer_email'})"
+           class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">email</a>
+      </nav>
+    </div>
+    <div class="mt-8 text-xs text-faint font-mono flex items-center gap-2">
+      <span>© 2026 fp-collector</span>
+      <span class="text-outline">//</span>
+      <span>first-party data, tiszta forrásból</span>
+    </div>
+  </footer>
+
+  <div id="banner" role="region" aria-label="Adatkezelési beleegyezés" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-run/40 text-fg px-6 py-4 flex items-center gap-4 text-sm font-mono hidden">
+    <span class="text-run">&gt;</span>
+    <span class="flex-1 text-dim">ez az oldal a saját collector API-ját használja a látogatói interakciók méréséhez.</span>
+    <button onclick="grantConsent(); document.getElementById('banner').classList.add('hidden'); loadLiveMetrics();"
+            class="group inline-flex items-center gap-2 bg-run/10 hover:bg-run/20 border border-run text-run hover:text-pulse px-4 py-2 min-h-[44px] font-mono text-xs uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-run focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm">
+      <span class="text-outline group-hover:text-run">[</span><span>elfogadom</span><span class="text-outline group-hover:text-run">]</span>
     </button>
   </div>
 
   <script src="/static/landing/tracker.js"></script>
   <script>
-    if (!localStorage.getItem('consent_analytics')) {
-      document.getElementById('banner').style.display = 'flex';
+    function handleContactSubmit(event) {
+      event.preventDefault();
+      const form = document.getElementById('contact-form');
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      const payload = {
+        name: document.getElementById('contact-name').value,
+        email: document.getElementById('contact-email').value,
+        message: document.getElementById('contact-message').value,
+      };
+      track('form_submit', payload);
+      form.classList.add('hidden');
+      const success = document.getElementById('contact-success');
+      success.classList.remove('hidden');
+      success.classList.add('flex');
     }
+
+    async function loadLiveMetrics() {
+      try {
+        const [health, funnel] = await Promise.all([
+          fetch('/api/stats/health').then(r => r.json()),
+          fetch('/api/stats/funnel').then(r => r.json()),
+        ]);
+        const fmt = n => new Intl.NumberFormat().format(n);
+        document.querySelector('[data-live="ingested"]').textContent = fmt(health.ingested);
+        document.querySelector('[data-live="processed"]').textContent = fmt(health.processed);
+        const formSubmits = (funnel.steps || []).find(s => s.event_name === 'form_submit')?.count || 0;
+        document.querySelector('[data-live="leads"]').textContent = fmt(formSubmits);
+        const status = document.querySelector('[data-live="status"]');
+        const statusDetail = document.querySelector('[data-live="status-detail"]');
+        if (health.failed > 0) {
+          status.innerHTML = '<span class="text-warn">⚠</span><span class="text-warn">degraded</span>';
+          statusDetail.textContent = `${health.failed} hibás event`;
+        } else if (health.ingested === 0) {
+          status.innerHTML = '<span class="text-dim">idle</span>';
+          statusDetail.textContent = 'még nincs event';
+        } else {
+          status.innerHTML = '<span class="text-run">✓</span><span class="text-run">healthy</span>';
+          statusDetail.textContent = 'minden rendszer működik';
+        }
+        const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        document.getElementById('metrics-timestamp').textContent = `// ${ts}`;
+      } catch (err) {
+        console.error('Failed to load live metrics:', err);
+      }
+    }
+
+    if (!localStorage.getItem('consent_analytics')) {
+      document.getElementById('banner').classList.remove('hidden');
+    }
+    loadLiveMetrics();
   </script>
 </body>
 </html>

@@ -3,81 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>fp-collector dashboard</title>
+  <title>fp-collector :: dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0F172A',
+            surface: '#1E293B',
+            elevated: '#334155',
+            outline: '#475569',
+            muted: '#272F42',
+            fg: '#F8FAFC',
+            dim: '#94A3B8',
+            faint: '#64748B',
+            run: '#22C55E',
+            pulse: '#4ADE80',
+            warn: '#F59E0B',
+            err: '#EF4444',
+          },
+          fontFamily: {
+            display: ['"Share Tech Mono"', 'ui-monospace', 'monospace'],
+            mono: ['"Fira Code"', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: 'Fira Code', ui-monospace, monospace; }
+    .font-display { font-family: 'Share Tech Mono', ui-monospace, monospace; letter-spacing: 0.02em; }
+    .glow-run { text-shadow: 0 0 20px rgba(34, 197, 94, 0.55), 0 0 40px rgba(34, 197, 94, 0.25); }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      50%       { opacity: 0.7; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    }
+    .live-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      .live-dot { animation: none; }
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-  <header class="max-w-6xl mx-auto px-6 pt-8 pb-4 flex items-baseline justify-between">
-    <h1 class="text-2xl font-semibold tracking-tight">fp-collector</h1>
-    <nav id="preset-nav" class="flex gap-1 text-sm">
-      <button data-range="24h" class="preset-btn px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200">24h</button>
-      <button data-range="7d"  class="preset-btn px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200">7d</button>
-      <button data-range="30d" class="preset-btn px-3 py-1.5 rounded-md bg-slate-900 text-white">30d</button>
-      <button data-range="all" class="preset-btn px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200">All</button>
+<body class="bg-bg text-fg min-h-screen antialiased">
+  <header class="max-w-6xl mx-auto px-6 pt-8 pb-4 flex items-center justify-between border-b border-muted">
+    <div class="flex items-center gap-4">
+      <a href="/" class="font-display text-lg text-fg flex items-center gap-2">
+        <span class="text-run">fp</span><span class="text-dim">::</span>collector
+      </a>
+      <span class="text-faint font-mono text-sm">// dashboard</span>
+    </div>
+    <nav id="preset-nav" class="flex gap-1 text-xs font-mono uppercase tracking-widest">
+      <button data-range="24h" class="preset-btn px-3 py-1.5 text-dim hover:text-run transition-colors">24h</button>
+      <button data-range="7d"  class="preset-btn px-3 py-1.5 text-dim hover:text-run transition-colors">7d</button>
+      <button data-range="30d" class="preset-btn px-3 py-1.5 bg-run/10 border border-run text-run rounded-sm">30d</button>
+      <button data-range="all" class="preset-btn px-3 py-1.5 text-dim hover:text-run transition-colors">all</button>
     </nav>
   </header>
 
-  <main class="max-w-6xl mx-auto px-6 py-4 space-y-6">
+  <main class="max-w-6xl mx-auto px-6 py-6 space-y-8">
     <section>
-      <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Pipeline Health</h2>
-      <div id="health-cards" class="grid grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl p-5 shadow-sm">
-          <div class="text-xs text-slate-500 uppercase tracking-wide">Ingested</div>
-          <div class="mt-2 text-3xl font-semibold tabular-nums" data-metric="ingested">—</div>
+      <div class="flex items-center gap-3 mb-5">
+        <span class="font-mono text-run text-sm">&gt;</span>
+        <h2 class="font-display text-sm text-dim uppercase tracking-widest">pipeline_health</h2>
+        <span class="flex-1 h-px bg-muted"></span>
+        <span class="flex items-center gap-2 text-xs text-dim font-mono">
+          <span class="w-1.5 h-1.5 rounded-full bg-run live-dot"></span>
+          <span>live</span>
+        </span>
+      </div>
+      <div id="health-cards" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-surface border border-outline rounded-sm p-5">
+          <div class="text-xs font-mono text-faint uppercase tracking-widest">ingested</div>
+          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-metric="ingested">—</div>
         </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm">
-          <div class="text-xs text-slate-500 uppercase tracking-wide">Duplicates</div>
-          <div class="mt-2 text-3xl font-semibold tabular-nums" data-metric="duplicates">—</div>
-          <div class="text-xs text-slate-500 mt-1" data-metric="duplicate_rate"></div>
+        <div class="bg-surface border border-outline rounded-sm p-5">
+          <div class="text-xs font-mono text-faint uppercase tracking-widest">duplicates</div>
+          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-metric="duplicates">—</div>
+          <div class="text-xs font-mono text-dim mt-1" data-metric="duplicate_rate"></div>
         </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm">
-          <div class="text-xs text-slate-500 uppercase tracking-wide">Processed</div>
-          <div class="mt-2 text-3xl font-semibold tabular-nums" data-metric="processed">—</div>
+        <div class="bg-surface border border-outline rounded-sm p-5">
+          <div class="text-xs font-mono text-faint uppercase tracking-widest">processed</div>
+          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-metric="processed">—</div>
         </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm">
-          <div class="text-xs text-slate-500 uppercase tracking-wide">Failed</div>
-          <div class="mt-2 text-3xl font-semibold tabular-nums" data-metric="failed">—</div>
+        <div class="bg-surface border border-outline rounded-sm p-5">
+          <div class="text-xs font-mono text-faint uppercase tracking-widest">failed</div>
+          <div class="mt-3 font-display text-3xl md:text-4xl" data-metric="failed">—</div>
         </div>
       </div>
     </section>
 
-    <section class="bg-white rounded-xl p-6 shadow-sm">
-      <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Conversion Funnel</h2>
-      <div id="funnel-chart" class="h-48">
-        <canvas id="funnel-canvas"></canvas>
+    <section>
+      <div class="flex items-center gap-3 mb-5">
+        <span class="font-mono text-run text-sm">&gt;</span>
+        <h2 class="font-display text-sm text-dim uppercase tracking-widest">conversion_funnel</h2>
+        <span class="flex-1 h-px bg-muted"></span>
       </div>
-      <div id="funnel-empty" class="hidden text-center text-slate-400 py-8">No data for this range</div>
+      <div class="bg-surface border border-outline rounded-sm p-6">
+        <div id="funnel-chart" class="h-48">
+          <canvas id="funnel-canvas"></canvas>
+        </div>
+        <div id="funnel-empty" class="hidden text-center text-faint py-8 font-mono text-sm">
+          &gt; nincs adat ebben az időszakban
+        </div>
+      </div>
     </section>
 
-    <div class="grid grid-cols-2 gap-6">
-      <section class="bg-white rounded-xl p-6 shadow-sm">
-        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Events by Day</h2>
-        <div class="h-64">
-          <canvas id="events-canvas"></canvas>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section>
+        <div class="flex items-center gap-3 mb-5">
+          <span class="font-mono text-run text-sm">&gt;</span>
+          <h2 class="font-display text-sm text-dim uppercase tracking-widest">events_by_day</h2>
+          <span class="flex-1 h-px bg-muted"></span>
         </div>
-        <div id="events-empty" class="hidden text-center text-slate-400 py-8">No data for this range</div>
+        <div class="bg-surface border border-outline rounded-sm p-6">
+          <div class="h-64">
+            <canvas id="events-canvas"></canvas>
+          </div>
+          <div id="events-empty" class="hidden text-center text-faint py-8 font-mono text-sm">
+            &gt; nincs adat ebben az időszakban
+          </div>
+        </div>
       </section>
 
-      <section class="bg-white rounded-xl p-6 shadow-sm">
-        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">UTM Source / Medium</h2>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="text-xs text-slate-500 uppercase tracking-wide border-b">
-              <tr>
-                <th class="text-left font-medium pb-2">Source</th>
-                <th class="text-left font-medium pb-2">Medium</th>
-                <th class="text-right font-medium pb-2">Events</th>
-                <th class="text-right font-medium pb-2">Leads</th>
-              </tr>
-            </thead>
-            <tbody id="utm-tbody" class="divide-y divide-slate-100"></tbody>
-          </table>
+      <section>
+        <div class="flex items-center gap-3 mb-5">
+          <span class="font-mono text-run text-sm">&gt;</span>
+          <h2 class="font-display text-sm text-dim uppercase tracking-widest">utm_breakdown</h2>
+          <span class="flex-1 h-px bg-muted"></span>
         </div>
-        <div id="utm-empty" class="hidden text-center text-slate-400 py-8">No data for this range</div>
+        <div class="bg-surface border border-outline rounded-sm p-6">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm font-mono">
+              <thead class="text-[10px] text-faint uppercase tracking-widest border-b border-muted">
+                <tr>
+                  <th class="text-left font-medium pb-3">source</th>
+                  <th class="text-left font-medium pb-3">medium</th>
+                  <th class="text-right font-medium pb-3">events</th>
+                  <th class="text-right font-medium pb-3">leads</th>
+                </tr>
+              </thead>
+              <tbody id="utm-tbody" class="divide-y divide-muted"></tbody>
+            </table>
+          </div>
+          <div id="utm-empty" class="hidden text-center text-faint py-8 font-mono text-sm">
+            &gt; nincs adat ebben az időszakban
+          </div>
+        </div>
       </section>
     </div>
   </main>
+
+  <footer class="max-w-6xl mx-auto px-6 py-8 mt-6 border-t border-muted">
+    <div class="text-xs text-faint font-mono flex items-center gap-2">
+      <span>© 2026 fp-collector</span>
+      <span class="text-outline">//</span>
+      <span>first-party data, tiszta forrásból</span>
+    </div>
+  </footer>
 
   <script src="/static/dashboard/app.js"></script>
 </body>
