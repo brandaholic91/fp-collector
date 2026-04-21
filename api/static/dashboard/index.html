@@ -1,1 +1,84 @@
-<!DOCTYPE html><html><body><p>Dashboard</p></body></html>
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fp-collector dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  <header class="max-w-6xl mx-auto px-6 pt-8 pb-4 flex items-baseline justify-between">
+    <h1 class="text-2xl font-semibold tracking-tight">fp-collector</h1>
+    <nav id="preset-nav" class="flex gap-1 text-sm">
+      <button data-range="24h" class="preset-btn px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200">24h</button>
+      <button data-range="7d"  class="preset-btn px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200">7d</button>
+      <button data-range="30d" class="preset-btn px-3 py-1.5 rounded-md bg-slate-900 text-white">30d</button>
+      <button data-range="all" class="preset-btn px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200">All</button>
+    </nav>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-4 space-y-6">
+    <section>
+      <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Pipeline Health</h2>
+      <div id="health-cards" class="grid grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <div class="text-xs text-slate-500 uppercase tracking-wide">Ingested</div>
+          <div class="mt-2 text-3xl font-semibold tabular-nums" data-metric="ingested">—</div>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <div class="text-xs text-slate-500 uppercase tracking-wide">Duplicates</div>
+          <div class="mt-2 text-3xl font-semibold tabular-nums" data-metric="duplicates">—</div>
+          <div class="text-xs text-slate-500 mt-1" data-metric="duplicate_rate"></div>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <div class="text-xs text-slate-500 uppercase tracking-wide">Processed</div>
+          <div class="mt-2 text-3xl font-semibold tabular-nums" data-metric="processed">—</div>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+          <div class="text-xs text-slate-500 uppercase tracking-wide">Failed</div>
+          <div class="mt-2 text-3xl font-semibold tabular-nums" data-metric="failed">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-xl p-6 shadow-sm">
+      <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Conversion Funnel</h2>
+      <div id="funnel-chart" class="h-48">
+        <canvas id="funnel-canvas"></canvas>
+      </div>
+      <div id="funnel-empty" class="hidden text-center text-slate-400 py-8">No data for this range</div>
+    </section>
+
+    <div class="grid grid-cols-2 gap-6">
+      <section class="bg-white rounded-xl p-6 shadow-sm">
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Events by Day</h2>
+        <div class="h-64">
+          <canvas id="events-canvas"></canvas>
+        </div>
+        <div id="events-empty" class="hidden text-center text-slate-400 py-8">No data for this range</div>
+      </section>
+
+      <section class="bg-white rounded-xl p-6 shadow-sm">
+        <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">UTM Source / Medium</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="text-xs text-slate-500 uppercase tracking-wide border-b">
+              <tr>
+                <th class="text-left font-medium pb-2">Source</th>
+                <th class="text-left font-medium pb-2">Medium</th>
+                <th class="text-right font-medium pb-2">Events</th>
+                <th class="text-right font-medium pb-2">Leads</th>
+              </tr>
+            </thead>
+            <tbody id="utm-tbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        <div id="utm-empty" class="hidden text-center text-slate-400 py-8">No data for this range</div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/static/dashboard/app.js"></script>
+</body>
+</html>

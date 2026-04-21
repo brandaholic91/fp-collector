@@ -6,3 +6,4 @@ __pycache__/
 .worktrees/
 tmp/
 .mcp.json
+docker-compose.override.yml

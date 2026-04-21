@@ -8,7 +8,7 @@ from slowapi.errors import RateLimitExceeded
 
 from config import settings
 from limiter import limiter
-from routes import events
+from routes import events, stats
 
 
 @asynccontextmanager
@@ -23,6 +23,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(events.router)
+app.include_router(stats.router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
