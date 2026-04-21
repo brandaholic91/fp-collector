@@ -1,12 +1,10 @@
-import asyncio
-import os
 import uuid
 from datetime import datetime, timezone
 
 import pytest
+import asyncpg
 
-
-PIPELINE_WAIT_SECONDS = int(os.environ.get("PHASE2_PIPELINE_WAIT", "45"))
+from pipeline import process_event
 
 
 async def _seed_events(pool, events):
@@ -27,10 +25,6 @@ async def _seed_events(pool, events):
             )
 
 
-@pytest.mark.skipif(
-    os.environ.get("PHASE2_SMOKE") != "1",
-    reason="Phase 2 smoke test only runs against a live n8n pipeline (set PHASE2_SMOKE=1)",
-)
 @pytest.mark.asyncio
 async def test_end_to_end_pipeline(db_pool):
     now = datetime.now(timezone.utc)
@@ -70,16 +64,21 @@ async def test_end_to_end_pipeline(db_pool):
     ]
     await _seed_events(db_pool, events)
 
-    await asyncio.sleep(PIPELINE_WAIT_SECONDS)
-
     event_ids = [e["event_id"] for e in events]
     async with db_pool.acquire() as conn:
         rows = await conn.fetch(
+            "SELECT * FROM raw_events WHERE event_id = ANY($1)", event_ids
+        )
+        for row in rows:
+            await process_event(conn, row)
+
+    async with db_pool.acquire() as conn:
+        raw_rows = await conn.fetch(
             "SELECT event_id, processed_at, processing_error FROM raw_events WHERE event_id = ANY($1)",
             event_ids,
         )
-        assert len(rows) == 3
-        for r in rows:
+        assert len(raw_rows) == 3
+        for r in raw_rows:
             assert r["processed_at"] is not None, f"not processed: {r['event_id']}"
             assert r["processing_error"] is None, f"has error: {r['processing_error']}"
 
@@ -96,11 +95,12 @@ async def test_end_to_end_pipeline(db_pool):
         assert clean[events[2]["event_id"]]["source_medium"] == "google / cpc"
 
         leads = await conn.fetch(
-            "SELECT event_id, payload FROM leads WHERE event_id = ANY($1)",
-            event_ids,
+            "SELECT event_id, payload FROM leads WHERE event_id = ANY($1)", event_ids
         )
         assert len(leads) == 1
         assert leads[0]["event_id"] == events[2]["event_id"]
-        import json
-        payload = json.loads(leads[0]["payload"]) if isinstance(leads[0]["payload"], str) else leads[0]["payload"]
+        payload = leads[0]["payload"]
+        if isinstance(payload, str):
+            import json
+            payload = json.loads(payload)
         assert payload["email"] == "smoke@example.com"
