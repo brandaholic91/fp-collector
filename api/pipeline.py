@@ -33,3 +33,46 @@ def compute_source_medium(
             return "twitter", "referral"
         return host, "referral"
     return "direct", "none"
+
+
+async def process_event(conn: asyncpg.Connection, row: asyncpg.Record) -> None:
+    source, medium = compute_source_medium(
+        row["utm_source"], row["utm_medium"], row["fbclid"], row["referrer"]
+    )
+    source_medium = f"{source} / {medium}"
+
+    async with conn.transaction():
+        await conn.execute(
+            """
+            INSERT INTO clean_events (
+                raw_event_id, event_id, event_name, occurred_at, session_id,
+                anonymous_id, page_url, referrer, utm_source, utm_medium,
+                utm_campaign, source_medium, payload
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+            ON CONFLICT (event_id) DO NOTHING
+            """,
+            row["id"], row["event_id"], row["event_name"], row["occurred_at"],
+            row["session_id"], row["anonymous_id"], row["page_url"], row["referrer"],
+            row["utm_source"] or None, row["utm_medium"] or None,
+            row["utm_campaign"] or None, source_medium, row["payload"],
+        )
+
+        if row["event_name"] == "form_submit":
+            await conn.execute(
+                """
+                INSERT INTO leads (
+                    event_id, anonymous_id, occurred_at,
+                    utm_source, utm_medium, utm_campaign, payload
+                )
+                SELECT $1,$2,$3,$4,$5,$6,$7
+                WHERE NOT EXISTS (SELECT 1 FROM leads WHERE event_id = $1)
+                """,
+                row["event_id"], row["anonymous_id"], row["occurred_at"],
+                row["utm_source"] or None, row["utm_medium"] or None,
+                row["utm_campaign"] or None, row["payload"],
+            )
+
+        await conn.execute(
+            "UPDATE raw_events SET processed_at = now() WHERE id = $1",
+            row["id"],
+        )
