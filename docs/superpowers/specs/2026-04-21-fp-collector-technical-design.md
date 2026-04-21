@@ -34,12 +34,12 @@ One Docker Compose stack with two services: `api` and `db`.
 │  ├── POST /v1/events   (ingest)     │
 │  ├── GET  /api/stats/* (dashboard)  │
 │  ├── /                (landing)     │
-│  └── /dashboard       (dashboard)  │
+│  └── /dashboard       (dashboard)   │
 │                                     │
 │  static/                            │
 │  ├── landing/index.html             │
 │  ├── landing/tracker.js             │
-│  └── dashboard/index.html          │
+│  └── dashboard/index.html           │
 └──────────────┬──────────────────────┘
                │ asyncpg
 ┌──────────────▼──────────────────────┐
