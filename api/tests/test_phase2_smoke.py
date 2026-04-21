@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime, timezone
 
@@ -69,7 +70,9 @@ async def test_end_to_end_pipeline(db_pool):
         rows = await conn.fetch(
             "SELECT * FROM raw_events WHERE event_id = ANY($1)", event_ids
         )
-        for row in rows:
+
+    for row in rows:
+        async with db_pool.acquire() as conn:
             await process_event(conn, row)
 
     async with db_pool.acquire() as conn:
@@ -101,6 +104,5 @@ async def test_end_to_end_pipeline(db_pool):
         assert leads[0]["event_id"] == events[2]["event_id"]
         payload = leads[0]["payload"]
         if isinstance(payload, str):
-            import json
             payload = json.loads(payload)
         assert payload["email"] == "smoke@example.com"

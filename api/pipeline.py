@@ -41,6 +41,7 @@ async def process_event(conn: asyncpg.Connection, row: asyncpg.Record) -> None:
     )
     source_medium = f"{source} / {medium}"
 
+    # Caller must not have an active transaction on conn — this opens its own.
     async with conn.transaction():
         await conn.execute(
             """

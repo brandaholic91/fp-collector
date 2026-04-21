@@ -84,7 +84,6 @@ def test_utm_requires_both_source_and_medium():
 import uuid
 import json
 from datetime import datetime, timezone
-import pytest_asyncio
 from pipeline import process_event
 
 
@@ -194,3 +193,31 @@ async def test_process_event_duplicate_is_idempotent(db_pool):
 
         count = await conn.fetchval("SELECT COUNT(*) FROM clean_events WHERE event_id=$1", row["event_id"])
         assert count == 1
+
+
+@pytest.mark.asyncio
+async def test_process_batch_sets_processing_error_on_failure(db_pool):
+    from unittest.mock import patch, AsyncMock
+    from worker import process_batch
+
+    row_data = _raw_event()
+    async with db_pool.acquire() as conn:
+        await conn.execute(
+            """INSERT INTO raw_events (event_id, event_name, occurred_at, session_id,
+               anonymous_id, page_url, utm_source, utm_medium, consent_analytics, payload)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,$9::jsonb)""",
+            row_data["event_id"], row_data["event_name"], row_data["occurred_at"],
+            row_data["session_id"], row_data["anonymous_id"], row_data["page_url"],
+            row_data["utm_source"], row_data["utm_medium"], row_data["payload"],
+        )
+
+    with patch("worker.process_event", new_callable=AsyncMock, side_effect=Exception("boom")):
+        await process_batch(db_pool)
+
+    async with db_pool.acquire() as conn:
+        raw = await conn.fetchrow(
+            "SELECT processed_at, processing_error FROM raw_events WHERE event_id=$1",
+            row_data["event_id"],
+        )
+        assert raw["processed_at"] is None
+        assert raw["processing_error"] == "boom"

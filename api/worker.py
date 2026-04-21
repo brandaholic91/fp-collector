@@ -31,23 +31,22 @@ async def process_batch(pool: asyncpg.Pool) -> int:
             WHERE processed_at IS NULL AND processing_error IS NULL
             ORDER BY id
             LIMIT $1
+            FOR UPDATE SKIP LOCKED
             """,
             BATCH_SIZE,
         )
 
-    processed = 0
-    for row in rows:
-        async with pool.acquire() as conn:
+        processed = 0
+        for row in rows:
             try:
                 await process_event(conn, row)
                 processed += 1
             except Exception as exc:
                 log.error("Failed to process event %s: %s", row["event_id"], exc)
-                async with pool.acquire() as err_conn:
-                    await err_conn.execute(
-                        "UPDATE raw_events SET processing_error = $1 WHERE id = $2",
-                        str(exc), row["id"],
-                    )
+                await conn.execute(
+                    "UPDATE raw_events SET processing_error = $1 WHERE id = $2",
+                    str(exc), row["id"],
+                )
 
     if processed:
         log.info("Processed %d events", processed)
@@ -56,6 +55,7 @@ async def process_batch(pool: asyncpg.Pool) -> int:
 
 async def run():
     signal.signal(signal.SIGTERM, _handle_sigterm)
+    signal.signal(signal.SIGINT, _handle_sigterm)
     pool = await asyncpg.create_pool(settings.database_url)
     log.info("Worker started, poll interval %ds", settings.worker_poll_interval)
 
