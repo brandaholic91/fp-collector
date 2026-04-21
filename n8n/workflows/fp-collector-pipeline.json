@@ -1,0 +1,192 @@
+{
+  "name": "fp-collector-pipeline",
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 0],
+      "id": "7a5d13d5-5574-43c5-b6aa-d9e319b0187a",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, event_id, event_name, occurred_at, session_id, anonymous_id,\n       page_url, referrer, utm_source, utm_medium, utm_campaign,\n       utm_term, utm_content, fbclid, payload\nFROM raw_events\nWHERE processed_at IS NULL AND processing_error IS NULL\nORDER BY id\nLIMIT 100\nFOR UPDATE SKIP LOCKED\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [208, 0],
+      "id": "890f6a22-6a0c-412f-9b16-3cb492b57b7d",
+      "name": "Fetch unprocessed batch",
+      "credentials": {
+        "postgres": {
+          "name": "fp-collector-n8n-worker"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function hostnameOf(url) {\n  if (!url) return null;\n  const m = url.match(/^https?:\\/\\/([^\\/:?#]+)/i);\n  return m ? m[1].toLowerCase().replace(/^www\\./, '') : null;\n}\n\nfor (const item of items) {\n  const e = item.json;\n  let source = null, medium = null;\n\n  if (e.utm_source && e.utm_medium) {\n    source = e.utm_source.toLowerCase();\n    medium = e.utm_medium.toLowerCase();\n  } else if (e.fbclid) {\n    source = 'facebook';\n    medium = 'cpc';\n  } else {\n    const host = hostnameOf(e.referrer);\n    if (host) {\n      if (host.includes('google.')) {\n        [source, medium] = ['google', 'organic'];\n      } else if (host.includes('facebook.') || host.includes('instagram.')) {\n        [source, medium] = ['facebook', 'referral'];\n      } else if (host.includes('linkedin.')) {\n        [source, medium] = ['linkedin', 'referral'];\n      } else if (host.includes('twitter.') || host.includes('t.co') || host.includes('x.com')) {\n        [source, medium] = ['twitter', 'referral'];\n      } else {\n        [source, medium] = [host, 'referral'];\n      }\n    } else {\n      [source, medium] = ['direct', 'none'];\n    }\n  }\n\n  item.json.source_medium = `${source} / ${medium}`;\n}\n\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [416, 0],
+      "id": "5da5db01-5bba-4ad6-80de-f89adb74a788",
+      "name": "Compute source_medium"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO clean_events (\n    raw_event_id, event_id, event_name, occurred_at, session_id, anonymous_id,\n    page_url, referrer, utm_source, utm_medium, utm_campaign, source_medium, payload\n) VALUES (\n    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13\n)\nON CONFLICT (event_id) DO NOTHING\n",
+        "options": {
+          "queryBatching": "independently",
+          "queryReplacement": "={{ $json.id }}, {{ $json.event_id }}, {{ $json.event_name }}, {{ $json.occurred_at }}, {{ $json.session_id }}, {{ $json.anonymous_id }}, {{ $json.page_url }}, {{ $json.referrer }}, {{ $json.utm_source }}, {{ $json.utm_medium }}, {{ $json.utm_campaign }}, {{ $json.source_medium }}, {{ JSON.stringify($json.payload) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [624, 0],
+      "id": "dd218057-f469-4534-84a5-ae23c0367df2",
+      "name": "Insert clean_events",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "postgres": {
+          "name": "fp-collector-n8n-worker"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0989b08a-9bd1-4889-be55-3fb3214fb02c",
+              "leftValue": "={{ $('Fetch unprocessed batch').item.json.event_name }}",
+              "rightValue": "form_submit",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [832, -96],
+      "id": "f5eeb232-50c2-4b65-89a5-9e0451274ff6",
+      "name": "Is form_submit?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads (\n    event_id, anonymous_id, occurred_at, utm_source, utm_medium, utm_campaign, payload\n) VALUES (\n    $1, $2, $3, $4, $5, $6, $7\n)",
+        "options": {
+          "queryBatching": "independently",
+          "queryReplacement": "={{ $('Fetch unprocessed batch').item.json.event_id }}, {{ $('Fetch unprocessed batch').item.json.anonymous_id }}, {{ $('Fetch unprocessed batch').item.json.occurred_at }}, {{ $('Fetch unprocessed batch').item.json.utm_source }}, {{ $('Fetch unprocessed batch').item.json.utm_medium }}, {{ $('Fetch unprocessed batch').item.json.utm_campaign }}, {{ JSON.stringify($('Fetch unprocessed batch').item.json.payload) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1056, -272],
+      "id": "bde51ea8-aff7-4b0f-8ce9-bbc29ac0f7fd",
+      "name": "Insert lead",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "postgres": {
+          "name": "fp-collector-n8n-worker"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE raw_events SET processed_at = now() WHERE id = $1",
+        "options": {
+          "queryReplacement": "={{ $('Fetch unprocessed batch').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1392, -160],
+      "id": "b9770dbd-af4d-4da4-a1b2-b4c1d3cd61f3",
+      "name": "Mark as processed",
+      "credentials": {
+        "postgres": {
+          "name": "fp-collector-n8n-worker"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE raw_events SET processing_error = $2 WHERE id = $1",
+        "options": {
+          "queryReplacement": "={{ $('Fetch unprocessed batch').item.json.id }}, {{ $json.message || 'unknown error' }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1264, 96],
+      "id": "8471b625-28f8-4b42-a534-17350817b4a4",
+      "name": "Set processing_error",
+      "credentials": {
+        "postgres": {
+          "name": "fp-collector-n8n-worker"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Fetch unprocessed batch", "type": "main", "index": 0 }]]
+    },
+    "Fetch unprocessed batch": {
+      "main": [[{ "node": "Compute source_medium", "type": "main", "index": 0 }]]
+    },
+    "Compute source_medium": {
+      "main": [[{ "node": "Insert clean_events", "type": "main", "index": 0 }]]
+    },
+    "Insert clean_events": {
+      "main": [
+        [{ "node": "Is form_submit?", "type": "main", "index": 0 }],
+        [{ "node": "Set processing_error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is form_submit?": {
+      "main": [
+        [{ "node": "Insert lead", "type": "main", "index": 0 }],
+        [{ "node": "Mark as processed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Insert lead": {
+      "main": [
+        [{ "node": "Mark as processed", "type": "main", "index": 0 }],
+        [{ "node": "Set processing_error", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

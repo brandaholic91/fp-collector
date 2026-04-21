@@ -1,4 +1,6 @@
 import os
+import pathlib
+
 os.environ.setdefault("DATABASE_URL", "postgresql://fpcollector:changeme@localhost:5432/fpcollector_test")
 os.environ.setdefault("RATE_LIMIT_PER_MINUTE", "100")
 
@@ -8,11 +10,14 @@ import asyncpg
 from httpx import AsyncClient, ASGITransport
 
 
-@pytest_asyncio.fixture(scope="session")
+INIT_SQL = pathlib.Path(__file__).resolve().parent.parent.parent / "db" / "init.sql"
+
+
+@pytest_asyncio.fixture
 async def db_pool():
     pool = await asyncpg.create_pool(os.environ["DATABASE_URL"])
     async with pool.acquire() as conn:
-        await conn.execute(open("db/init.sql").read())
+        await conn.execute(INIT_SQL.read_text())
     yield pool
     await pool.close()
 

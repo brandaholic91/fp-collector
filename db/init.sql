@@ -15,12 +15,16 @@ CREATE TABLE IF NOT EXISTS raw_events (
     utm_content       TEXT,
     fbclid            TEXT,
     consent_analytics BOOLEAN     NOT NULL,
-    payload           JSONB       NOT NULL DEFAULT '{}'
+    payload           JSONB       NOT NULL DEFAULT '{}',
+    processed_at      TIMESTAMPTZ,
+    processing_error  TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_raw_events_occurred_at ON raw_events (occurred_at);
 CREATE INDEX IF NOT EXISTS idx_raw_events_event_name  ON raw_events (event_name);
 CREATE INDEX IF NOT EXISTS idx_raw_events_session_id  ON raw_events (session_id);
+CREATE INDEX IF NOT EXISTS idx_raw_events_unprocessed ON raw_events (id)
+    WHERE processed_at IS NULL AND processing_error IS NULL;
 
 CREATE TABLE IF NOT EXISTS clean_events (
     id            BIGSERIAL   PRIMARY KEY,
