@@ -112,7 +112,7 @@ Below the diagram, a short paragraph and four bullets:
 
 ### 4.6 Footer
 
-- Author name + role: `Holik Balázs — MarTech engineer`
+- Author name + role: `Holik Balázs — Marketing engineer`
 - Three links:
   - `GitHub` → placeholder URL
   - `LinkedIn` → placeholder URL
