@@ -19,8 +19,10 @@ jobs:
           set -euxo pipefail
           APP_DIR="/etc/dokploy/compose/fpcollector-stack-0xbwzg/code"
           BRANCH="main"
+          TOKEN="${{ github.token }}"
 
           git config --global --add safe.directory "$APP_DIR" || true
+          git -C "$APP_DIR" remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
           git -C "$APP_DIR" fetch origin "$BRANCH"
           git -C "$APP_DIR" checkout "$BRANCH"
           git -C "$APP_DIR" reset --hard "origin/$BRANCH"
