@@ -91,7 +91,7 @@
           <span class="text-fg">kezedben <span class="cursor"></span></span>
         </h1>
         <p class="mt-10 text-dim leading-relaxed max-w-xl">
-          Self-hosted MarTech referencia: collector API, PostgreSQL, n8n feldolgozás és dashboard. Minden komponens a saját infrastruktúrádon fut — zero SaaS-függőség, zero third-party data leak.
+          Self-hosted MarTech referencia: collector API, PostgreSQL, Python worker és dashboard. Minden komponens a saját infrastruktúrádon fut — zero SaaS-függőség, zero third-party data leak.
         </p>
         <div class="mt-12 flex flex-col sm:flex-row gap-3">
           <a href="/dashboard?utm_source=landing&utm_medium=hero_cta&utm_campaign=portfolio_demo"
@@ -130,7 +130,7 @@
         <div class="bg-surface border border-outline rounded-sm p-5">
           <div class="text-xs font-mono text-faint uppercase tracking-widest">processed</div>
           <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-live="processed">—</div>
-          <div class="mt-1 text-xs text-dim font-mono">n8n által feldolgozva</div>
+          <div class="mt-1 text-xs text-dim font-mono">worker által feldolgozva</div>
         </div>
         <div class="bg-surface border border-outline rounded-sm p-5">
           <div class="text-xs font-mono text-faint uppercase tracking-widest">leads</div>
@@ -159,7 +159,7 @@
       </div>
 
       <div class="bg-surface border border-outline rounded-sm p-6 md:p-8">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-center font-mono text-sm" aria-label="Adatfolyam: Browser → Collector API → PostgreSQL → n8n → Dashboard">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 text-center font-mono text-sm" aria-label="Adatfolyam: Browser → Collector API → PostgreSQL → Python worker → Dashboard">
           <div class="bg-bg border border-muted rounded-sm px-3 py-4">
             <div class="text-faint text-[10px] uppercase tracking-widest">01</div>
             <div class="mt-2 text-fg">browser</div>
@@ -174,7 +174,7 @@
           </div>
           <div class="bg-bg border border-muted rounded-sm px-3 py-4">
             <div class="text-faint text-[10px] uppercase tracking-widest">04</div>
-            <div class="mt-2 text-fg">n8n_workflow</div>
+            <div class="mt-2 text-fg">py_worker</div>
           </div>
           <div class="bg-bg border border-muted rounded-sm px-3 py-4">
             <div class="text-faint text-[10px] uppercase tracking-widest">05</div>
@@ -193,7 +193,7 @@
           </div>
           <div class="grid grid-cols-[auto_1fr] gap-4">
             <span class="text-run font-mono shrink-0">03 &gt;</span>
-            <p class="text-dim"><span class="text-fg">n8n workflow</span> 30s-enként dolgoz fel új sorokat: dedup, source/medium enrichment, <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">form_submit</code> → <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">leads</code> routing. Dead-letter a hibás rekordoknak.</p>
+            <p class="text-dim"><span class="text-fg">Python worker</span> folyamatosan dolgozza fel az új sorokat: dedup, source/medium enrichment, <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">form_submit</code> → <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">leads</code> routing. Hibás rekordokhoz <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">processing_error</code> mező.</p>
           </div>
           <div class="grid grid-cols-[auto_1fr] gap-4">
             <span class="text-run font-mono shrink-0">04 &gt;</span>
@@ -243,7 +243,7 @@
           <span class="text-run font-mono mt-0.5">✓</span>
           <div>
             <div class="text-fg font-mono text-sm">form_submit event elküldve</div>
-            <div class="mt-1 text-xs text-dim font-mono">&gt; 30 másodpercen belül megjelenik a dashboard leads táblájában (n8n poll).</div>
+            <div class="mt-1 text-xs text-dim font-mono">&gt; pár másodpercen belül megjelenik a dashboard leads táblájában.</div>
           </div>
         </div>
 
