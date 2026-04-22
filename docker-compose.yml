@@ -37,9 +37,9 @@ services:
     env_file: .env
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./data/postgres:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -51,3 +51,6 @@ networks:
     driver: bridge
   proxy-net:
     external: true
+
+volumes:
+  db_data:
