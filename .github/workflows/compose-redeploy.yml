@@ -15,15 +15,16 @@ jobs:
     steps:
       - name: Deploy latest commit on dokploy-lab
         shell: bash
-        env:
-          COMPOSE_DIR: /etc/dokploy/compose/fpcollector-stack-0xbwzg/code
-          COMPOSE_FILE: /etc/dokploy/compose/fpcollector-stack-0xbwzg/code/docker-compose.yml
-          COMPOSE_PROJECT_NAME: fpcollector-stack-0xbwzg
         run: |
-          set -euo pipefail
-          test -d "$COMPOSE_DIR"
-          cd "$COMPOSE_DIR"
-          git fetch origin main
-          git checkout main
-          git reset --hard "$GITHUB_SHA"
-          docker compose -p "$COMPOSE_PROJECT_NAME" -f "$COMPOSE_FILE" up -d --build --remove-orphans
+          set -euxo pipefail
+          APP_DIR="/etc/dokploy/compose/fpcollector-stack-0xbwzg/code"
+          BRANCH="main"
+
+          git config --global --add safe.directory "$APP_DIR" || true
+          git -C "$APP_DIR" fetch origin "$BRANCH"
+          git -C "$APP_DIR" checkout "$BRANCH"
+          git -C "$APP_DIR" reset --hard "origin/$BRANCH"
+          git -C "$APP_DIR" clean -fd
+
+          docker compose -f "$APP_DIR/docker-compose.yml" --env-file "$APP_DIR/.env" pull
+          docker compose -f "$APP_DIR/docker-compose.yml" --env-file "$APP_DIR/.env" up -d --remove-orphans
