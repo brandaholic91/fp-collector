@@ -10,7 +10,13 @@ services:
         condition: service_healthy
     networks:
       - internal
-      - proxy-net
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.fpcollector.rule=Host(`fp.growthframe.hu`)
+      - traefik.http.routers.fpcollector.entrypoints=web
+      - traefik.http.services.fpcollector.loadbalancer.server.port=8000
 
   worker:
     build: ./api
@@ -49,7 +55,7 @@ services:
 networks:
   internal:
     driver: bridge
-  proxy-net:
+  dokploy-network:
     external: true
 
 volumes:
