@@ -26,5 +26,6 @@ jobs:
           git -C "$APP_DIR" reset --hard "origin/$BRANCH"
           git -C "$APP_DIR" clean -fd
 
-          docker compose -f "$APP_DIR/docker-compose.yml" --env-file "$APP_DIR/.env" pull
-          docker compose -f "$APP_DIR/docker-compose.yml" --env-file "$APP_DIR/.env" up -d --remove-orphans
+          cd "$APP_DIR"
+          docker compose --env-file .env pull db || true
+          docker compose --env-file .env up -d --build --remove-orphans
