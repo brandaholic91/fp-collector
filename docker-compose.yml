@@ -14,6 +14,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
     networks:
       - internal
       - dokploy-network
@@ -67,6 +68,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     networks:
       - internal
 
