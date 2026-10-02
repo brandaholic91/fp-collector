@@ -21,9 +21,6 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy-network
-      - traefik.http.routers.fpcollector.rule=Host(`fp.growthframe.hu`)
-      - traefik.http.routers.fpcollector.entrypoints=web
-      - traefik.http.services.fpcollector.loadbalancer.server.port=8000
 
   worker:
     build: ./api
