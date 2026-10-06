@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal, Optional
 from uuid import UUID
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 ECOMMERCE_EVENTS = ("view_item", "add_to_cart", "begin_checkout", "purchase")
 
@@ -43,6 +43,16 @@ class EventRequest(BaseModel):
 
 class EventResponse(BaseModel):
     status: Literal["ok", "duplicate"]
+
+
+class BatchRequest(BaseModel):
+    events: list[EventRequest] = Field(min_length=1, max_length=1000)
+
+
+class BatchResponse(BaseModel):
+    accepted: int
+    duplicates: int
+    consent_rejected: int
 
 
 class HealthResponse(BaseModel):
