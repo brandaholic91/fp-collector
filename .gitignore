@@ -7,3 +7,5 @@ __pycache__/
 tmp/
 .mcp.json
 docker-compose.override.yml
+.env.world
+.venv/

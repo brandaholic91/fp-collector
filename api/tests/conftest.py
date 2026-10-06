@@ -39,6 +39,14 @@ async def clean_db(request):
     await pool.close()
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limit():
+    # The limiter counts per process: without this, tests eat each other's quota.
+    from limiter import limiter
+    limiter.reset()
+    yield
+
+
 @pytest_asyncio.fixture
 async def client():
     from main import app
