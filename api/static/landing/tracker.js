@@ -15,9 +15,6 @@
     );
   }
 
-  const anonymousId = getOrCreate(localStorage, ANON_KEY, uuidv4);
-  const sessionId   = getOrCreate(sessionStorage, 'session_id', uuidv4);
-
   function getUtmParams() {
     const p = new URLSearchParams(window.location.search);
     return {
@@ -43,8 +40,8 @@
         event_id:          uuidv4(),
         event_name:        eventName,
         occurred_at:       new Date().toISOString(),
-        session_id:        sessionId,
-        anonymous_id:      anonymousId,
+        session_id:        getOrCreate(sessionStorage, 'session_id', uuidv4),
+        anonymous_id:      getOrCreate(localStorage, ANON_KEY, uuidv4),
         page_url:          window.location.href,
         referrer:          document.referrer || null,
         consent_analytics: true,
