@@ -1,12 +1,17 @@
 from datetime import datetime
 from typing import Literal, Optional
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
+
+ECOMMERCE_EVENTS = ("view_item", "add_to_cart", "begin_checkout", "purchase")
 
 
 class EventRequest(BaseModel):
     event_id: UUID
-    event_name: Literal["page_view", "cta_click", "form_submit"]
+    event_name: Literal[
+        "page_view", "cta_click", "form_submit",
+        "view_item", "add_to_cart", "begin_checkout", "purchase",
+    ]
     occurred_at: datetime
     session_id: str
     anonymous_id: str
@@ -20,6 +25,20 @@ class EventRequest(BaseModel):
     fbclid: Optional[str] = None
     consent_analytics: bool
     payload: dict = {}
+
+    @model_validator(mode="after")
+    def _purchase_payload(self):
+        if self.event_name != "purchase":
+            return self
+        p = self.payload
+        for key in ("order_id", "currency", "customer_key"):
+            if not isinstance(p.get(key), str) or not p[key]:
+                raise ValueError(f"purchase payload: '{key}' is required")
+        value = p.get("value")
+        # bool is a subclass of int in Python, so True would pass as 1.
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError("purchase payload: 'value' must be a positive number")
+        return self
 
 
 class EventResponse(BaseModel):

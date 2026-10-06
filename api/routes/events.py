@@ -2,9 +2,10 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, Request
 from asyncpg import Pool
 
+from config import settings
 from db import get_pool
 from limiter import limiter
-from models import EventRequest, EventResponse
+from models import ECOMMERCE_EVENTS, EventRequest, EventResponse
 
 router = APIRouter()
 
@@ -12,6 +13,9 @@ router = APIRouter()
 @router.post("/v1/events", response_model=EventResponse, status_code=202)
 @limiter.limit("100/minute")
 async def ingest_event(request: Request, event: EventRequest, pool: Pool = Depends(get_pool)):
+    if event.event_name in ECOMMERCE_EVENTS and not settings.ecommerce_enabled:
+        raise HTTPException(status_code=422, detail="unknown event_name")
+
     if not event.consent_analytics:
         raise HTTPException(status_code=403, detail="consent required")
 
