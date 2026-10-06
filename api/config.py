@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     allowed_origins: str = "*"
     worker_poll_interval: int = 10
     ecommerce_enabled: bool = False
+    worker_batched: bool = False
 
     class Config:
         env_file = ".env"

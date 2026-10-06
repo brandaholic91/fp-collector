@@ -5,12 +5,13 @@ import signal
 import asyncpg
 
 from config import settings
-from pipeline import process_event
+from pipeline import process_event, process_rows_batched
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 BATCH_SIZE = 100
+BATCHED_SIZE = 5000
 _shutdown = False
 
 
@@ -33,8 +34,16 @@ async def process_batch(pool: asyncpg.Pool) -> int:
             LIMIT $1
             FOR UPDATE SKIP LOCKED
             """,
-            BATCH_SIZE,
+            BATCHED_SIZE if settings.worker_batched else BATCH_SIZE,
         )
+
+        if settings.worker_batched and rows:
+            try:
+                await process_rows_batched(conn, rows)
+                log.info("Processed %d events (batched)", len(rows))
+                return len(rows)
+            except Exception as exc:
+                log.error("Batched processing failed, falling back to per-event: %s", exc)
 
         processed = 0
         for row in rows:

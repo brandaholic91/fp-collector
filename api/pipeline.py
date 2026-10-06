@@ -104,3 +104,91 @@ async def process_event(conn: asyncpg.Connection, row: asyncpg.Record) -> None:
             "UPDATE raw_events SET processed_at = now() WHERE id = $1",
             row["id"],
         )
+
+
+async def process_rows_batched(conn: asyncpg.Connection, rows: list) -> None:
+    """Same result as process_event, for a whole batch in ONE transaction with
+    set-based SQL. source_medium is still computed in Python (the rule lives
+    in one place) and travels back to SQL paired with the row id.
+
+    If anything raises, the transaction rolls back and the caller retries the
+    rows one by one, so a single bad row cannot block the rest.
+    """
+    ids = [r["id"] for r in rows]
+    source_mediums = [
+        "%s / %s" % compute_source_medium(
+            r["utm_source"], r["utm_medium"], r["fbclid"], r["referrer"]
+        )
+        for r in rows
+    ]
+
+    async with conn.transaction():
+        await conn.execute(
+            """
+            INSERT INTO clean_events (
+                raw_event_id, event_id, event_name, occurred_at, session_id,
+                anonymous_id, page_url, referrer, utm_source, utm_medium,
+                utm_campaign, source_medium, payload
+            )
+            SELECT r.id, r.event_id, r.event_name, r.occurred_at, r.session_id,
+                   r.anonymous_id, r.page_url, r.referrer,
+                   NULLIF(r.utm_source, ''), NULLIF(r.utm_medium, ''),
+                   NULLIF(r.utm_campaign, ''), t.source_medium, r.payload
+            FROM raw_events r
+            JOIN unnest($1::bigint[], $2::text[]) AS t(id, source_medium) ON t.id = r.id
+            ON CONFLICT (event_id) DO NOTHING
+            """,
+            ids, source_mediums,
+        )
+        await conn.execute(
+            """
+            INSERT INTO leads (
+                event_id, anonymous_id, occurred_at,
+                utm_source, utm_medium, utm_campaign, payload
+            )
+            SELECT r.event_id, r.anonymous_id, r.occurred_at,
+                   NULLIF(r.utm_source, ''), NULLIF(r.utm_medium, ''),
+                   NULLIF(r.utm_campaign, ''), r.payload
+            FROM raw_events r
+            WHERE r.id = ANY($1::bigint[]) AND r.event_name = 'form_submit'
+              AND NOT EXISTS (SELECT 1 FROM leads l WHERE l.event_id = r.event_id)
+            """,
+            ids,
+        )
+        await conn.execute(
+            """
+            INSERT INTO orders (
+                order_id, event_id, value, currency, customer_key, anonymous_id,
+                session_id, occurred_at, utm_source, utm_medium, utm_campaign,
+                source_medium
+            )
+            SELECT r.payload->>'order_id', r.event_id, (r.payload->>'value')::numeric,
+                   r.payload->>'currency', r.payload->>'customer_key', r.anonymous_id,
+                   r.session_id, r.occurred_at,
+                   NULLIF(r.utm_source, ''), NULLIF(r.utm_medium, ''),
+                   NULLIF(r.utm_campaign, ''), t.source_medium
+            FROM raw_events r
+            JOIN unnest($1::bigint[], $2::text[]) AS t(id, source_medium) ON t.id = r.id
+            WHERE r.event_name = 'purchase'
+            ON CONFLICT (order_id) DO NOTHING
+            """,
+            ids, source_mediums,
+        )
+        # GROUP BY: if the same pair appears twice in a batch, ON CONFLICT DO
+        # UPDATE would touch one row twice and Postgres would raise.
+        await conn.execute(
+            """
+            INSERT INTO identity_links (anonymous_id, customer_key, first_seen_at)
+            SELECT r.anonymous_id, r.payload->>'customer_key', MIN(r.occurred_at)
+            FROM raw_events r
+            WHERE r.id = ANY($1::bigint[]) AND r.event_name = 'purchase'
+            GROUP BY 1, 2
+            ON CONFLICT (anonymous_id, customer_key) DO UPDATE
+            SET first_seen_at = LEAST(identity_links.first_seen_at, EXCLUDED.first_seen_at)
+            """,
+            ids,
+        )
+        await conn.execute(
+            "UPDATE raw_events SET processed_at = now() WHERE id = ANY($1::bigint[])",
+            ids,
+        )
