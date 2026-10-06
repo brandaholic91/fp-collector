@@ -1,3 +1,4 @@
+import json
 import re
 import asyncpg
 
@@ -71,6 +72,32 @@ async def process_event(conn: asyncpg.Connection, row: asyncpg.Record) -> None:
                 row["event_id"], row["anonymous_id"], row["occurred_at"],
                 row["utm_source"] or None, row["utm_medium"] or None,
                 row["utm_campaign"] or None, row["payload"],
+            )
+
+        if row["event_name"] == "purchase":
+            order = json.loads(row["payload"])
+            await conn.execute(
+                """
+                INSERT INTO orders (
+                    order_id, event_id, value, currency, customer_key, anonymous_id,
+                    session_id, occurred_at, utm_source, utm_medium, utm_campaign,
+                    source_medium
+                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+                ON CONFLICT (order_id) DO NOTHING
+                """,
+                order["order_id"], row["event_id"], order["value"], order["currency"],
+                order["customer_key"], row["anonymous_id"], row["session_id"],
+                row["occurred_at"], row["utm_source"] or None,
+                row["utm_medium"] or None, row["utm_campaign"] or None, source_medium,
+            )
+            await conn.execute(
+                """
+                INSERT INTO identity_links (anonymous_id, customer_key, first_seen_at)
+                VALUES ($1,$2,$3)
+                ON CONFLICT (anonymous_id, customer_key) DO UPDATE
+                SET first_seen_at = LEAST(identity_links.first_seen_at, EXCLUDED.first_seen_at)
+                """,
+                row["anonymous_id"], order["customer_key"], row["occurred_at"],
             )
 
         await conn.execute(
