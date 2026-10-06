@@ -136,6 +136,7 @@ async def process_rows_batched(conn: asyncpg.Connection, rows: list) -> None:
                    NULLIF(r.utm_campaign, ''), t.source_medium, r.payload
             FROM raw_events r
             JOIN unnest($1::bigint[], $2::text[]) AS t(id, source_medium) ON t.id = r.id
+            ORDER BY r.id
             ON CONFLICT (event_id) DO NOTHING
             """,
             ids, source_mediums,
@@ -152,6 +153,7 @@ async def process_rows_batched(conn: asyncpg.Connection, rows: list) -> None:
             FROM raw_events r
             WHERE r.id = ANY($1::bigint[]) AND r.event_name = 'form_submit'
               AND NOT EXISTS (SELECT 1 FROM leads l WHERE l.event_id = r.event_id)
+            ORDER BY r.id
             """,
             ids,
         )
@@ -170,6 +172,7 @@ async def process_rows_batched(conn: asyncpg.Connection, rows: list) -> None:
             FROM raw_events r
             JOIN unnest($1::bigint[], $2::text[]) AS t(id, source_medium) ON t.id = r.id
             WHERE r.event_name = 'purchase'
+            ORDER BY r.id
             ON CONFLICT (order_id) DO NOTHING
             """,
             ids, source_mediums,
