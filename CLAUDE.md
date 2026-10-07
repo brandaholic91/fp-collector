@@ -143,11 +143,10 @@ docker run -d --name fp-test-db \
   -v "$PWD/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro" postgres:16.3
 cd api && uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requirements.txt
 DATABASE_URL=postgresql://fpcollector:changeme@localhost:25432/fpcollector_test \
-  .venv/bin/python -m pytest -q --deselect tests/test_phase2_permissions.py
+  .venv/bin/python -m pytest -q
 ```
 
-`test_phase2_permissions.py` needs the `n8n_worker` role and the `db` hostname; it only runs
-inside the compose network. After changing `db/init.sql`, re-apply it to the test database:
+After changing `db/init.sql`, re-apply it to the test database:
 `docker exec -i fp-test-db psql -q -U fpcollector -d fpcollector_test < db/init.sql`.
 
 ## Development Phases
