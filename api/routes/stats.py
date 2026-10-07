@@ -36,6 +36,9 @@ async def stats_health(
     query = f"""
         SELECT
             COUNT(*) AS ingested,
+            COUNT(*) FILTER (
+                WHERE processed_at IS NULL AND processing_error IS NULL
+            ) AS pending,
             COUNT(*) FILTER (WHERE processed_at IS NOT NULL) AS processed,
             COUNT(*) FILTER (WHERE processing_error IS NOT NULL) AS failed
         FROM raw_events
@@ -45,8 +48,7 @@ async def stats_health(
         row = await conn.fetchrow(query, *params)
     return HealthResponse(
         ingested=row["ingested"],
-        duplicates=0,
-        duplicate_rate=0.0,
+        pending=row["pending"],
         processed=row["processed"],
         failed=row["failed"],
     )

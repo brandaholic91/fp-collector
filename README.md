@@ -44,7 +44,7 @@ Böngésző → tracker.js → Collector API → raw_events → worker → clean
 |---|---|
 | `POST /v1/events` | Egy esemény fogadása. Percenként 100 kérés IP-címenként. |
 | `POST /v1/events/batch` | 1–1000 esemény egy kérésben. Csak bekapcsolt `ECOMMERCE_ENABLED` mellett él. |
-| `GET /api/stats/health` | Beérkezett, duplikált, feldolgozott és hibás események száma |
+| `GET /api/stats/health` | Beérkezett, feldolgozásra váró, feldolgozott és hibás események száma |
 | `GET /api/stats/funnel` | Látogatás → kattintás → űrlapbeküldés |
 | `GET /api/stats/events` | Események száma naponta |
 | `GET /api/stats/utm` | Események és leadek forrás szerint |
@@ -127,4 +127,5 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 - **Nincs hitelesítés.** A dashboard és a statisztikai végpontok nyilvánosak, mert az adat szimulált. Valódi adatnál ezeket védeni kell.
 - **Az űrlap adata a `payload`-ba kerül.** A demóban ez kitalált e-mail-cím; valódi használatnál a személyes adat tárolásáról külön dönteni kell.
 - **A hibás sort a worker nem próbálja újra.** A hiba látszik, a javítás kézi.
+- **A duplikált kérést nem számolja.** Az ismételt esemény nem kerül be még egyszer, de arról, hogy hány ilyen érkezett, nincs adat.
 - **A forrás-hozzárendelés egyszerű.** UTM-paraméterekből, `fbclid`-ből és a hivatkozó oldal nevéből dolgozik; `gclid`-et nem kezel.

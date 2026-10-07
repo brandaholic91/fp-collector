@@ -57,8 +57,7 @@ class BatchResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     ingested: int
-    duplicates: int
-    duplicate_rate: float
+    pending: int
     processed: int
     failed: int
 

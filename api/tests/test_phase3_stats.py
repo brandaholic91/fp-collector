@@ -26,8 +26,7 @@ async def test_health_returns_zeros_for_empty_db(client):
     assert response.status_code == 200
     assert response.json() == {
         "ingested": 0,
-        "duplicates": 0,
-        "duplicate_rate": 0.0,
+        "pending": 0,
         "processed": 0,
         "failed": 0,
     }
@@ -46,8 +45,7 @@ async def test_health_counts_ingested_processed_failed(client, db_pool):
     assert data["ingested"] == 4
     assert data["processed"] == 2
     assert data["failed"] == 1
-    assert data["duplicates"] == 0
-    assert data["duplicate_rate"] == 0.0
+    assert data["pending"] == 1
 
 
 @pytest.mark.asyncio

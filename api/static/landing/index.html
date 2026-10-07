@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>fp-collector — self-hosted first-party data pipeline</title>
-  <meta name="description" content="Self-hosted first-party data pipeline: collector API, PostgreSQL és Python worker. Saját infrastruktúrán — zero SaaS-függőség, teljes kontroll.">
+  <meta name="description" content="Self-hosted first-party data pipeline: collector API, PostgreSQL és Python worker. Az event-adat saját szerveren marad, harmadik félhez nem kerül.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://fp.growthframe.hu/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://fp.growthframe.hu/">
   <meta property="og:title" content="fp-collector — self-hosted first-party data pipeline">
-  <meta property="og:description" content="Self-hosted first-party data pipeline: collector API, PostgreSQL és Python worker. Saját infrastruktúrán — zero SaaS-függőség, teljes kontroll.">
+  <meta property="og:description" content="Self-hosted first-party data pipeline: collector API, PostgreSQL és Python worker. Az event-adat saját szerveren marad, harmadik félhez nem kerül.">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="fp-collector — self-hosted first-party data pipeline">
-  <meta name="twitter:description" content="Self-hosted first-party data pipeline: collector API, PostgreSQL és Python worker. Saját infrastruktúrán — zero SaaS-függőség, teljes kontroll.">
+  <meta name="twitter:description" content="Self-hosted first-party data pipeline: collector API, PostgreSQL és Python worker. Az event-adat saját szerveren marad, harmadik félhez nem kerül.">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -102,7 +102,7 @@
           <span class="text-fg">kezedben <span class="cursor"></span></span>
         </h1>
         <p class="mt-10 text-dim leading-relaxed max-w-xl">
-          Self-hosted MarTech referencia: collector API, PostgreSQL, Python worker és dashboard. Minden komponens a saját infrastruktúrádon fut — zero SaaS-függőség, zero third-party data leak.
+          Self-hosted MarTech referencia: collector API, PostgreSQL, Python worker és dashboard. Minden komponens saját szerveren fut: az event-adat nem kerül harmadik félhez.
         </p>
         <div class="mt-12 flex flex-col sm:flex-row gap-3">
           <a href="/dashboard?utm_source=landing&utm_medium=hero_cta&utm_campaign=portfolio_demo"
@@ -211,9 +211,47 @@
           </div>
           <div class="grid grid-cols-[auto_1fr] gap-4">
             <span class="text-run font-mono shrink-0">04 &gt;</span>
-            <p class="text-dim"><span class="text-fg">Dashboard</span> 4 REST endpointról olvassa az aggregált adatokat: pipeline health, conversion funnel, daily time-series, UTM breakdown leads számmal.</p>
+            <p class="text-dim"><span class="text-fg">Dashboard</span> REST endpointokról olvassa az aggregált adatokat: pipeline health, conversion funnel, daily time-series, UTM breakdown leads számmal.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="py-12 md:py-16" aria-labelledby="ecommerce-heading">
+      <div class="flex items-center gap-3 mb-8">
+        <span class="font-mono text-run text-sm">&gt;</span>
+        <h2 id="ecommerce-heading" class="font-display text-sm text-dim uppercase tracking-widest">ecommerce_mode</h2>
+        <span class="flex-1 h-px bg-muted"></span>
+        <span class="text-warn text-xs font-mono">// ezen a demón kikapcsolva</span>
+      </div>
+
+      <div class="bg-surface border border-outline rounded-sm p-6 md:p-8">
+        <p class="text-sm text-dim leading-relaxed">
+          Az <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">ECOMMERCE_ENABLED</code> kapcsolóval a collector webshop-eventeket is fogad. Ez a demó lead-gen oldalt mér, ezért itt a kapcsoló ki van kapcsolva, és a dashboard vásárlási adatot nem mutat.
+        </p>
+        <div class="mt-6 space-y-5 text-sm leading-relaxed">
+          <div class="grid grid-cols-[auto_1fr] gap-4">
+            <span class="text-run font-mono shrink-0">+</span>
+            <p class="text-dim"><span class="text-fg">Négy további event:</span> view_item, add_to_cart, begin_checkout, purchase. Egy kérésben akár 1000 is beküldhető.</p>
+          </div>
+          <div class="grid grid-cols-[auto_1fr] gap-4">
+            <span class="text-run font-mono shrink-0">+</span>
+            <p class="text-dim"><span class="text-fg">Ellenőrzött vásárlás:</span> a purchase eventből csak akkor lesz <code class="text-run bg-bg px-1.5 py-0.5 rounded-sm border border-muted">orders</code> sor, ha van benne rendelésazonosító, pozitív érték, pénznem és vásárlóazonosító.</p>
+          </div>
+          <div class="grid grid-cols-[auto_1fr] gap-4">
+            <span class="text-run font-mono shrink-0">+</span>
+            <p class="text-dim"><span class="text-fg">Eszköz-összekapcsolás:</span> vásárlás után az eszköz korábbi eventjei is a vásárlóhoz tartoznak.</p>
+          </div>
+          <div class="grid grid-cols-[auto_1fr] gap-4">
+            <span class="text-run font-mono shrink-0">+</span>
+            <p class="text-dim"><span class="text-fg">Kötegelt worker:</span> 5000 sor egy tranzakcióban; ha a köteg elbukik, soronként dolgozza fel újra.</p>
+          </div>
+        </div>
+        <p class="mt-6 text-xs text-faint font-mono leading-relaxed">
+          &gt; helyben kipróbálható: <a href="https://github.com/brandaholic91/fp-collector#e-commerce-mód"
+             onclick="track('cta_click', {label: 'ecommerce_readme'})"
+             class="text-dim hover:text-run underline underline-offset-4 transition-colors">leírás a README-ben</a>.
+        </p>
       </div>
     </section>
 
@@ -278,9 +316,6 @@
         <a href="https://github.com/brandaholic91"
            onclick="track('cta_click', {label: 'footer_github'})"
            class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">github</a>
-        <a href="https://www.linkedin.com/in/placeholder"
-           onclick="track('cta_click', {label: 'footer_linkedin'})"
-           class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">linkedin</a>
         <a href="mailto:holikbalazs@gmail.com"
            onclick="track('cta_click', {label: 'footer_email'})"
            class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">email</a>

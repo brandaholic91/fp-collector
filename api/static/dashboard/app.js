@@ -39,9 +39,10 @@
   // --- Health ---
   function renderHealth(data) {
     document.querySelector('[data-metric="ingested"]').textContent = fmtInt(data.ingested);
-    document.querySelector('[data-metric="duplicates"]').textContent = fmtInt(data.duplicates);
-    document.querySelector('[data-metric="duplicate_rate"]').textContent =
-      data.ingested > 0 ? fmtPct(data.duplicate_rate) : '';
+    const pendingEl = document.querySelector('[data-metric="pending"]');
+    pendingEl.textContent = fmtInt(data.pending);
+    pendingEl.classList.remove('text-fg', 'text-warn');
+    pendingEl.classList.add(data.pending > 0 ? 'text-warn' : 'text-fg');
     document.querySelector('[data-metric="processed"]').textContent = fmtInt(data.processed);
     const failedEl = document.querySelector('[data-metric="failed"]');
     failedEl.textContent = fmtInt(data.failed);
