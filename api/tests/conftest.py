@@ -35,8 +35,22 @@ async def clean_db(request):
     pool = await asyncpg.create_pool(os.environ["DATABASE_URL"])
     yield
     async with pool.acquire() as conn:
-        await conn.execute("TRUNCATE raw_events, clean_events, leads RESTART IDENTITY CASCADE")
+        await conn.execute("TRUNCATE raw_events, clean_events, leads, orders, identity_links RESTART IDENTITY CASCADE")
     await pool.close()
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limit():
+    # The limiter counts per process: without this, tests eat each other's quota.
+    from limiter import limiter
+    limiter.reset()
+    yield
+
+
+@pytest.fixture
+def ecommerce(monkeypatch):
+    from config import settings
+    monkeypatch.setattr(settings, "ecommerce_enabled", True)
 
 
 @pytest_asyncio.fixture

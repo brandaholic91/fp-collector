@@ -44,6 +44,11 @@ Every event sent to `POST /v1/events` must include:
 
 **Idempotency:** `event_id` is the deduplication key. The API must reject or ignore duplicate `event_id` values (upsert-ignore pattern on `raw_events`).
 
+**E-commerce events** (`view_item`, `add_to_cart`, `begin_checkout`, `purchase`) are accepted
+only when `ECOMMERCE_ENABLED=true`; otherwise they are rejected with 422 like any unknown name.
+A `purchase` must carry `order_id`, a positive `value`, `currency` and `customer_key` in
+`payload`.
+
 ## Database Layers
 
 - `raw_events` — ingested as-is with minimal transformation; source of truth.
@@ -98,6 +103,51 @@ Production runs on `dokploy-lab` inside the Proxmox MarTech homelab.
 - Outputs: enriched rows in `clean_events`; lead rows in `leads`; optional webhook for high-value leads.
 - p95 processing latency target: < 60s.
 - Failed/invalid records must be routed to a dead-letter channel (not silently dropped).
+
+## World instance (synthetic webshop traffic)
+
+A second, **local and disposable** instance of this stack receives the synthetic traffic of the
+portfolio's fictional webshop (`~/Projects/portfolio-holikbalazs/world`). It has its own compose
+project, volume and ports, and never shares a database with production.
+
+```bash
+cp .env.world.example .env.world                               # once
+docker compose -f docker-compose.world.yml up -d --build --wait
+curl -s http://127.0.0.1:18080/health                          # {"status":"ok"}
+docker compose -f docker-compose.world.yml down                # stop, keep the data
+docker compose -f docker-compose.world.yml down -v             # stop and wipe the data
+```
+
+API on `127.0.0.1:18080`, Postgres on `127.0.0.1:15433`.
+
+Two settings exist for this instance. Both default to `false`, so production is unaffected:
+
+| Setting | Effect when `true` |
+|---|---|
+| `ECOMMERCE_ENABLED` | accepts the four e-commerce events; enables `POST /v1/events/batch` (1-1000 events per request, no rate limit); a `purchase` also writes `orders` and `identity_links` |
+| `WORKER_BATCHED` | the worker processes 5000 rows per transaction with set-based SQL, falling back to per-event processing if the batch fails |
+
+`resolved_events` is a view over `clean_events` that adds `person_id`: the linked `customer_key`
+if the device has ever purchased, otherwise the `anonymous_id` itself.
+
+**Synthetic traffic must never reach the production database.** Production does not need
+`db/migrations/004_ecommerce.sql`: with the flag off no `purchase` can reach the worker.
+
+## Running the tests locally
+
+```bash
+docker run -d --name fp-test-db \
+  -e POSTGRES_USER=fpcollector -e POSTGRES_PASSWORD=changeme -e POSTGRES_DB=fpcollector_test \
+  -p 127.0.0.1:25432:5432 \
+  -v "$PWD/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro" postgres:16.3
+cd api && uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requirements.txt
+DATABASE_URL=postgresql://fpcollector:changeme@localhost:25432/fpcollector_test \
+  .venv/bin/python -m pytest -q --deselect tests/test_phase2_permissions.py
+```
+
+`test_phase2_permissions.py` needs the `n8n_worker` role and the `db` hostname; it only runs
+inside the compose network. After changing `db/init.sql`, re-apply it to the test database:
+`docker exec -i fp-test-db psql -q -U fpcollector -d fpcollector_test < db/init.sql`.
 
 ## Development Phases
 

@@ -1,0 +1,47 @@
+# The world instance: the portfolio's synthetic webshop traffic goes here and
+# NEVER into the production DB. Local and disposable -- it only needs to run
+# while loading and exporting. See "World instance" in CLAUDE.md.
+name: fp-world
+
+services:
+  api:
+    build: ./api
+    image: fp-collector-api:world
+    env_file: .env.world
+    ports:
+      - "127.0.0.1:18080:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  worker:
+    build: ./api
+    image: fp-collector-api:world
+    command: python worker.py
+    env_file: .env.world
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16.3
+    env_file: .env.world
+    ports:
+      - "127.0.0.1:15433:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - world_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  world_db_data:
