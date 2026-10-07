@@ -214,6 +214,9 @@ async def purge_expired(conn: asyncpg.Connection, days: int) -> int:
     async with conn.transaction():
         # Children first: leads and orders point at clean_events, which points at raw_events.
         for table in ("leads", "orders", "clean_events"):
+            # Production runs without the e-commerce migration, so orders may not exist.
+            if await conn.fetchval("SELECT to_regclass($1)", table) is None:
+                continue
             await conn.execute(f"DELETE FROM {table} WHERE event_id IN ({_EXPIRED})", days)
         status = await conn.execute(f"DELETE FROM raw_events WHERE event_id IN ({_EXPIRED})", days)
     return int(status.split()[-1])

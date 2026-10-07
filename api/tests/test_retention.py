@@ -60,3 +60,20 @@ async def test_old_unprocessed_event_is_deleted(client, db_pool):
         await _age(conn, old, 91)
         await purge_expired(conn, 90)
         assert await _counts(conn, old) == (0, 0, 0)
+
+
+async def test_purge_works_without_the_orders_table(client, db_pool):
+    # Production has no e-commerce tables.
+    old = await _post(client)
+    await run_worker(db_pool)
+    async with db_pool.acquire() as conn:
+        await _age(conn, old, 91)
+        tx = conn.transaction()
+        await tx.start()
+        try:
+            await conn.execute("ALTER TABLE orders RENAME TO orders_hidden")
+            await purge_expired(conn, 90)
+            assert await _counts(conn, old) == (0, 0, 0)
+        finally:
+            await tx.rollback()
+
