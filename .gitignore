@@ -9,3 +9,4 @@ tmp/
 docker-compose.override.yml
 .env.world
 .venv/
+docs/
