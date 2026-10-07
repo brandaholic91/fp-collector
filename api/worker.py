@@ -1,17 +1,19 @@
 import asyncio
 import logging
 import signal
+import time
 
 import asyncpg
 
 from config import settings
-from pipeline import process_event, process_rows_batched
+from pipeline import process_event, process_rows_batched, purge_expired
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 BATCH_SIZE = 100
 BATCHED_SIZE = 5000
+PURGE_INTERVAL = 24 * 60 * 60
 _shutdown = False
 
 
@@ -62,14 +64,28 @@ async def process_batch(pool: asyncpg.Pool) -> int:
     return processed
 
 
+async def purge(pool: asyncpg.Pool) -> None:
+    try:
+        async with pool.acquire() as conn:
+            deleted = await purge_expired(conn, settings.retention_days)
+        log.info("Retention: deleted %d events older than %d days", deleted, settings.retention_days)
+    except Exception as exc:
+        log.error("Retention purge failed: %s", exc)
+
+
 async def run():
     signal.signal(signal.SIGTERM, _handle_sigterm)
     signal.signal(signal.SIGINT, _handle_sigterm)
     pool = await asyncpg.create_pool(settings.database_url)
     log.info("Worker started, poll interval %ds", settings.worker_poll_interval)
 
+    next_purge = time.monotonic()
+
     try:
         while not _shutdown:
+            if settings.retention_days > 0 and time.monotonic() >= next_purge:
+                await purge(pool)
+                next_purge = time.monotonic() + PURGE_INTERVAL
             count = await process_batch(pool)
             if count == 0:
                 await asyncio.sleep(settings.worker_poll_interval)

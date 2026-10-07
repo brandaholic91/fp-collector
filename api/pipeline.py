@@ -195,3 +195,25 @@ async def process_rows_batched(conn: asyncpg.Connection, rows: list) -> None:
             "UPDATE raw_events SET processed_at = now() WHERE id = ANY($1::bigint[])",
             ids,
         )
+
+
+# Events the simulator made carry payload.simulated = true; they are not
+# visitor data, so retention leaves them alone.
+_EXPIRED = """
+    SELECT event_id FROM raw_events
+    WHERE received_at < now() - make_interval(days => $1)
+      AND NOT (payload @> '{"simulated": true}')
+"""
+
+
+async def purge_expired(conn: asyncpg.Connection, days: int) -> int:
+    """Delete visitor events received more than `days` days ago, from every table.
+
+    Returns the number of raw_events rows deleted.
+    """
+    async with conn.transaction():
+        # Children first: leads and orders point at clean_events, which points at raw_events.
+        for table in ("leads", "orders", "clean_events"):
+            await conn.execute(f"DELETE FROM {table} WHERE event_id IN ({_EXPIRED})", days)
+        status = await conn.execute(f"DELETE FROM raw_events WHERE event_id IN ({_EXPIRED})", days)
+    return int(status.split()[-1])

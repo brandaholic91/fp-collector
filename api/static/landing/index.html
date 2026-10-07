@@ -294,6 +294,12 @@
           </button>
         </form>
 
+        <p id="contact-blocked" class="hidden mt-4 text-xs text-warn font-mono leading-relaxed" role="status" aria-live="polite">
+          &gt; a mérést nem fogadtad el, ezért az event nem ment el.
+          <button type="button" onclick="resetConsent()"
+                  class="text-run hover:text-pulse underline underline-offset-4 focus-visible:outline-none focus-visible:text-pulse">hozzájárulás módosítása</button>
+        </p>
+
         <div id="contact-success" class="hidden items-start gap-3 py-4" role="status" aria-live="polite">
           <span class="text-run font-mono mt-0.5">✓</span>
           <div>
@@ -306,6 +312,53 @@
           &gt; valódi kapcsolatfelvétel: lásd a footerben lévő linkeket.
         </p>
       </div>
+    </section>
+
+    <section id="privacy" class="py-12 md:py-16" aria-labelledby="privacy-heading">
+      <div class="flex items-center gap-3 mb-8">
+        <span class="font-mono text-run text-sm">&gt;</span>
+        <h2 id="privacy-heading" class="font-display text-sm text-dim uppercase tracking-widest">adatkezelés</h2>
+        <span class="flex-1 h-px bg-muted"></span>
+      </div>
+
+      <dl class="max-w-2xl text-sm font-mono text-dim leading-relaxed space-y-4">
+        <div>
+          <dt class="text-fg">mikor mér az oldal</dt>
+          <dd>Csak akkor, ha a sávban az „elfogadom” gombra kattintasz. Elutasítás után semmi nem megy el, és azonosító sem jön létre.</dd>
+        </div>
+        <div>
+          <dt class="text-fg">mit tárol a böngésződ</dt>
+          <dd>A döntésedet, egy véletlen látogatói azonosítót (<code class="text-run">localStorage</code>) és egy munkamenet-azonosítót (<code class="text-run">sessionStorage</code>). Cookie-t az oldal nem használ.</dd>
+        </div>
+        <div>
+          <dt class="text-fg">mi megy a szerverre</dt>
+          <dd>A két azonosító, az esemény neve és ideje, az oldal címe, a hivatkozó oldal és a kampányparaméterek (UTM, fbclid). A demo form a tesztadatot és az üzenet szövegét küldi el. Az IP-címed nem kerül az események mellé.</dd>
+        </div>
+        <div>
+          <dt class="text-fg">mire jó</dt>
+          <dd>A pipeline működésének bemutatására. A dashboard csak összesített számokat mutat.</dd>
+        </div>
+        <div>
+          <dt class="text-fg">meddig</dt>
+          <dd>90 napig, utána törlöm.</dd>
+        </div>
+        <div>
+          <dt class="text-fg">külső szolgáltatók</dt>
+          <dd>Az eseményeket senkinek nem adom át. A betűtípusok és a CSS külső CDN-ről töltődnek (Google Fonts, Tailwind CDN), ezek a betöltéskor látják az IP-címedet.</dd>
+        </div>
+        <div>
+          <dt class="text-fg">visszavonás</dt>
+          <dd>
+            <button type="button" onclick="resetConsent()"
+                    class="text-run hover:text-pulse underline underline-offset-4 focus-visible:outline-none focus-visible:text-pulse">hozzájárulás visszavonása vagy módosítása</button>
+            — törli az azonosítókat a böngésződből, és újra megkérdez.
+          </dd>
+        </div>
+        <div>
+          <dt class="text-fg">adatkezelő</dt>
+          <dd>Holik Balázs — <a href="mailto:holikbalazs@gmail.com" class="text-run hover:text-pulse underline underline-offset-4">holikbalazs@gmail.com</a>. A már elküldött adatok törlését itt kérheted.</dd>
+        </div>
+      </dl>
     </section>
   </main>
 
@@ -331,13 +384,19 @@
       <span>© 2026 fp-collector</span>
       <span class="text-outline">//</span>
       <span>first-party data, tiszta forrásból</span>
+      <span class="text-outline">//</span>
+      <a href="#privacy" class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">adatkezelés</a>
     </div>
   </footer>
 
-  <div id="banner" role="region" aria-label="Adatkezelési beleegyezés" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-run/40 text-fg px-6 py-4 flex items-center gap-4 text-sm font-mono hidden">
+  <div id="banner" role="region" aria-label="Adatkezelési beleegyezés" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-run/40 text-fg px-6 py-4 flex flex-wrap items-center gap-4 text-sm font-mono hidden">
     <span class="text-run">&gt;</span>
-    <span class="flex-1 text-dim">ez az oldal a saját collector API-ját használja a látogatói interakciók méréséhez.</span>
-    <button onclick="grantConsent(); document.getElementById('banner').classList.add('hidden'); loadLiveMetrics();"
+    <span class="flex-1 min-w-[16rem] text-dim">ha elfogadod, az oldal egy véletlen azonosítót tárol a böngésződben, és a saját collector API-jának elküldi, mit nyitottál meg és honnan érkeztél. <a href="#privacy" class="text-run hover:text-pulse underline underline-offset-4">részletek</a></span>
+    <button onclick="denyConsent(); hideBanner();"
+            class="group inline-flex items-center gap-2 bg-run/10 hover:bg-run/20 border border-run text-run hover:text-pulse px-4 py-2 min-h-[44px] font-mono text-xs uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-run focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm">
+      <span class="text-outline group-hover:text-run">[</span><span>elutasítom</span><span class="text-outline group-hover:text-run">]</span>
+    </button>
+    <button onclick="grantConsent(); hideBanner(); loadLiveMetrics();"
             class="group inline-flex items-center gap-2 bg-run/10 hover:bg-run/20 border border-run text-run hover:text-pulse px-4 py-2 min-h-[44px] font-mono text-xs uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-run focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm">
       <span class="text-outline group-hover:text-run">[</span><span>elfogadom</span><span class="text-outline group-hover:text-run">]</span>
     </button>
@@ -354,7 +413,9 @@
         email: document.getElementById('contact-email').value,
         message: document.getElementById('contact-message').value,
       };
-      track('form_submit', payload);
+      const blocked = document.getElementById('contact-blocked');
+      if (!track('form_submit', payload)) { blocked.classList.remove('hidden'); return; }
+      blocked.classList.add('hidden');
       form.classList.add('hidden');
       const success = document.getElementById('contact-success');
       success.classList.remove('hidden');
@@ -389,6 +450,15 @@
       } catch (err) {
         console.error('Failed to load live metrics:', err);
       }
+    }
+
+    function hideBanner() {
+      document.getElementById('banner').classList.add('hidden');
+    }
+
+    function resetConsent() {
+      revokeConsent();
+      document.getElementById('banner').classList.remove('hidden');
     }
 
     if (!localStorage.getItem('consent_analytics')) {

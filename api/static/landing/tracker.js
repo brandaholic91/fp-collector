@@ -32,7 +32,7 @@
   }
 
   window.track = function (eventName, payload = {}) {
-    if (!hasConsent()) return;
+    if (!hasConsent()) return false;
     fetch(COLLECTOR_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -49,11 +49,24 @@
         ...getUtmParams(),
       }),
     }).catch(() => {});
+    return true;
   };
 
   window.grantConsent = function () {
     localStorage.setItem(CONSENT_KEY, 'true');
     track('page_view');
+  };
+
+  // Remembers the refusal so the banner does not come back on every visit.
+  window.denyConsent = function () {
+    localStorage.setItem(CONSENT_KEY, 'false');
+  };
+
+  // Forgets the choice and removes both identifiers from the browser.
+  window.revokeConsent = function () {
+    localStorage.removeItem(CONSENT_KEY);
+    localStorage.removeItem(ANON_KEY);
+    sessionStorage.removeItem('session_id');
   };
 
   if (hasConsent()) {
