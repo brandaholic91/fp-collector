@@ -47,6 +47,11 @@ async def landing():
     return FileResponse("static/landing/index.html")
 
 
+@app.get("/adatkezeles")
+async def privacy():
+    return FileResponse("static/landing/privacy.html")
+
+
 @app.get("/favicon.ico", include_in_schema=False)
 @app.get("/favicon.svg", include_in_schema=False)
 async def favicon():

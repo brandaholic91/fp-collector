@@ -313,53 +313,6 @@
         </p>
       </div>
     </section>
-
-    <section id="privacy" class="py-12 md:py-16" aria-labelledby="privacy-heading">
-      <div class="flex items-center gap-3 mb-8">
-        <span class="font-mono text-run text-sm">&gt;</span>
-        <h2 id="privacy-heading" class="font-display text-sm text-dim uppercase tracking-widest">adatkezelés</h2>
-        <span class="flex-1 h-px bg-muted"></span>
-      </div>
-
-      <dl class="max-w-2xl text-sm font-mono text-dim leading-relaxed space-y-4">
-        <div>
-          <dt class="text-fg">mikor mér az oldal</dt>
-          <dd>Csak akkor, ha a sávban az „elfogadom” gombra kattintasz. Elutasítás után semmi nem megy el, és azonosító sem jön létre.</dd>
-        </div>
-        <div>
-          <dt class="text-fg">mit tárol a böngésződ</dt>
-          <dd>A döntésedet, egy véletlen látogatói azonosítót (<code class="text-run">localStorage</code>) és egy munkamenet-azonosítót (<code class="text-run">sessionStorage</code>). Cookie-t az oldal nem használ.</dd>
-        </div>
-        <div>
-          <dt class="text-fg">mi megy a szerverre</dt>
-          <dd>A két azonosító, az esemény neve és ideje, az oldal címe, a hivatkozó oldal és a kampányparaméterek (UTM, fbclid). A demo form a tesztadatot és az üzenet szövegét küldi el. Az IP-címed nem kerül az események mellé.</dd>
-        </div>
-        <div>
-          <dt class="text-fg">mire jó</dt>
-          <dd>A pipeline működésének bemutatására. A dashboard csak összesített számokat mutat.</dd>
-        </div>
-        <div>
-          <dt class="text-fg">meddig</dt>
-          <dd>90 napig, utána törlöm.</dd>
-        </div>
-        <div>
-          <dt class="text-fg">külső szolgáltatók</dt>
-          <dd>Az eseményeket senkinek nem adom át. A betűtípusok és a CSS külső CDN-ről töltődnek (Google Fonts, Tailwind CDN), ezek a betöltéskor látják az IP-címedet.</dd>
-        </div>
-        <div>
-          <dt class="text-fg">visszavonás</dt>
-          <dd>
-            <button type="button" onclick="resetConsent()"
-                    class="text-run hover:text-pulse underline underline-offset-4 focus-visible:outline-none focus-visible:text-pulse">hozzájárulás visszavonása vagy módosítása</button>
-            — törli az azonosítókat a böngésződből, és újra megkérdez.
-          </dd>
-        </div>
-        <div>
-          <dt class="text-fg">adatkezelő</dt>
-          <dd>Holik Balázs — <a href="mailto:holikbalazs@gmail.com" class="text-run hover:text-pulse underline underline-offset-4">holikbalazs@gmail.com</a>. A már elküldött adatok törlését itt kérheted.</dd>
-        </div>
-      </dl>
-    </section>
   </main>
 
   <footer class="max-w-5xl w-full mx-auto px-6 py-10 mt-8 border-t border-muted">
@@ -385,13 +338,13 @@
       <span class="text-outline">//</span>
       <span>first-party data, tiszta forrásból</span>
       <span class="text-outline">//</span>
-      <a href="#privacy" class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">adatkezelés</a>
+      <a href="/adatkezeles" class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">adatkezelés</a>
     </div>
   </footer>
 
   <div id="banner" role="region" aria-label="Adatkezelési beleegyezés" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-run/40 text-fg px-6 py-4 flex flex-wrap items-center gap-4 text-sm font-mono hidden">
     <span class="text-run">&gt;</span>
-    <span class="flex-1 min-w-[16rem] text-dim">ha elfogadod, az oldal egy véletlen azonosítót tárol a böngésződben, és a saját collector API-jának elküldi, mit nyitottál meg és honnan érkeztél. <a href="#privacy" class="text-run hover:text-pulse underline underline-offset-4">részletek</a></span>
+    <span class="flex-1 min-w-[16rem] text-dim">ha elfogadod, az oldal egy véletlen azonosítót tárol a böngésződben, és a saját collector API-jának elküldi, mit nyitottál meg és honnan érkeztél. <a href="/adatkezeles" class="text-run hover:text-pulse underline underline-offset-4">részletek</a></span>
     <button onclick="denyConsent(); hideBanner();"
             class="group inline-flex items-center gap-2 bg-run/10 hover:bg-run/20 border border-run text-run hover:text-pulse px-4 py-2 min-h-[44px] font-mono text-xs uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-run focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm">
       <span class="text-outline group-hover:text-run">[</span><span>elutasítom</span><span class="text-outline group-hover:text-run">]</span>

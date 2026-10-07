@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>adatkezelés — fp-collector</title>
+  <meta name="description" content="Mit mér az fp-collector demo oldal, mit tárol a böngésződben, meddig őrzi meg, és hogyan vonhatod vissza a hozzájárulásodat.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://fp.growthframe.hu/adatkezeles">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0F172A',
+            surface: '#1E293B',
+            elevated: '#334155',
+            outline: '#475569',
+            muted: '#272F42',
+            fg: '#F8FAFC',
+            dim: '#94A3B8',
+            faint: '#64748B',
+            run: '#22C55E',
+            pulse: '#4ADE80',
+            warn: '#F59E0B',
+            err: '#EF4444',
+          },
+          fontFamily: {
+            display: ['"Share Tech Mono"', 'ui-monospace', 'monospace'],
+            mono: ['"Fira Code"', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: 'Fira Code', ui-monospace, monospace; }
+    .font-display { font-family: 'Share Tech Mono', ui-monospace, monospace; letter-spacing: 0.02em; }
+    .glow-run   { text-shadow: 0 0 20px rgba(34, 197, 94, 0.55), 0 0 40px rgba(34, 197, 94, 0.25); }
+    .glow-dim   { text-shadow: 0 0 14px rgba(74, 222, 128, 0.35); }
+    .bracket::before { content: "[ "; color: #475569; }
+    .bracket::after  { content: " ]"; color: #475569; }
+    .cursor::after { content: "▋"; margin-left: 4px; animation: blink 1.1s steps(2, end) infinite; color: #22C55E; }
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      background-position: -1px -1px;
+    }
+    @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      50%       { opacity: 0.7; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    }
+    .live-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      .cursor::after, .live-dot { animation: none; }
+    }
+  </style>
+</head>
+<body class="bg-bg text-fg min-h-screen flex flex-col antialiased">
+  <header class="max-w-5xl w-full mx-auto px-6 pt-8 pb-4 flex items-center justify-between relative z-10 border-b border-muted">
+    <a href="/" class="font-display text-lg text-fg flex items-center gap-2">
+      <span class="text-run">fp</span><span class="text-dim">::</span>collector
+    </a>
+    <nav class="flex gap-6 text-sm">
+      <a href="/" class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">főoldal</a>
+    </nav>
+  </header>
+
+  <main class="max-w-5xl w-full mx-auto px-6 flex-1 relative py-12 md:py-16">
+    <div class="flex items-center gap-3 mb-8">
+      <span class="font-mono text-run text-sm">&gt;</span>
+      <h1 class="font-display text-sm text-dim uppercase tracking-widest">adatkezelés</h1>
+      <span class="flex-1 h-px bg-muted"></span>
+    </div>
+
+    <dl class="max-w-2xl text-sm font-mono text-dim leading-relaxed space-y-4">
+      <div>
+        <dt class="text-fg">mikor mér az oldal</dt>
+        <dd>Csak akkor, ha a sávban az „elfogadom” gombra kattintasz. Elutasítás után semmi nem megy el, és azonosító sem jön létre.</dd>
+      </div>
+      <div>
+        <dt class="text-fg">mit tárol a böngésződ</dt>
+        <dd>A döntésedet, egy véletlen látogatói azonosítót (<code class="text-run">localStorage</code>) és egy munkamenet-azonosítót (<code class="text-run">sessionStorage</code>). Cookie-t az oldal nem használ.</dd>
+      </div>
+      <div>
+        <dt class="text-fg">mi megy a szerverre</dt>
+        <dd>A két azonosító, az esemény neve és ideje, az oldal címe, a hivatkozó oldal és a kampányparaméterek (UTM, fbclid). A demo form a tesztadatot és az üzenet szövegét küldi el. Az IP-címed nem kerül az események mellé.</dd>
+      </div>
+      <div>
+        <dt class="text-fg">mire jó</dt>
+        <dd>A pipeline működésének bemutatására. A dashboard csak összesített számokat mutat.</dd>
+      </div>
+      <div>
+        <dt class="text-fg">meddig</dt>
+        <dd>90 napig, utána törlöm.</dd>
+      </div>
+      <div>
+        <dt class="text-fg">külső szolgáltatók</dt>
+        <dd>Az eseményeket senkinek nem adom át. A betűtípusok és a CSS külső CDN-ről töltődnek (Google Fonts, Tailwind CDN), ezek a betöltéskor látják az IP-címedet.</dd>
+      </div>
+      <div>
+        <dt class="text-fg">visszavonás</dt>
+        <dd>
+          <button type="button" onclick="withdraw()"
+                  class="text-run hover:text-pulse underline underline-offset-4 focus-visible:outline-none focus-visible:text-pulse">hozzájárulás visszavonása vagy módosítása</button>
+          — törli az azonosítókat a böngésződből; a főoldal újra megkérdez.
+          <span id="withdraw-done" class="hidden block mt-2 text-run" role="status" aria-live="polite">✓ visszavonva, az azonosítók törölve. <a href="/" class="underline underline-offset-4 hover:text-pulse">vissza a főoldalra</a></span>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-fg">adatkezelő</dt>
+        <dd>Holik Balázs — <a href="mailto:holikbalazs@gmail.com" class="text-run hover:text-pulse underline underline-offset-4">holikbalazs@gmail.com</a>. A már elküldött adatok törlését itt kérheted.</dd>
+      </div>
+    </dl>
+  </main>
+
+  <footer class="max-w-5xl w-full mx-auto px-6 py-10 mt-8 border-t border-muted">
+    <div class="text-xs text-faint font-mono flex items-center gap-2">
+      <span>© 2026 fp-collector</span>
+      <span class="text-outline">//</span>
+      <a href="/" class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">főoldal</a>
+    </div>
+  </footer>
+
+  <script src="/static/landing/tracker.js?v=2"></script>
+  <script>
+    function withdraw() {
+      revokeConsent();
+      document.getElementById('withdraw-done').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
