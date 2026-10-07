@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-os.environ.setdefault("DATABASE_URL", "postgresql://fpcollector:changeme@localhost:15432/fpcollector_test")
+os.environ.setdefault("DATABASE_URL", "postgresql://fpcollector:changeme@localhost:25432/fpcollector_test")
 os.environ.setdefault("RATE_LIMIT_PER_MINUTE", "100")
 
 import pytest
