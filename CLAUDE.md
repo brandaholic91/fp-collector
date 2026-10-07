@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **fp-collector** is an end-to-end first-party data collection and processing system. It is a MarTech portfolio project built as a reference implementation for collecting structured web analytics events through a self-hosted pipeline.
 
-**Data flow:** Browser → Client tracking script → Event Collector API → PostgreSQL (`raw_events`) → n8n pipeline → `clean_events`/`leads` → Dashboard
+**Data flow:** Browser → Client tracking script → Event Collector API → PostgreSQL (`raw_events`) → Python worker → `clean_events`/`leads` → Dashboard
 
 ## Stack Architecture
 
@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Landing page + client tracking script | User-facing frontend, fires events | `dokploy-lab` |
 | Event Collector API (`POST /v1/events`) | Receives, validates, idempotently stores events | `dokploy-lab` |
 | PostgreSQL | Two-layer storage: `raw_events`, `clean_events`, `leads` | `dokploy-lab` |
-| n8n workflows | Dedup, enrichment, normalization, lead routing | `martech-lab` (existing n8n) |
+| Python worker (`api/worker.py`) | Dedup, enrichment, normalization, lead creation | `dokploy-lab` |
 | Dashboard | KPI and funnel visualization | `dokploy-lab` |
 | Umami (Phase 4) | Secondary analytics validation layer | `dokploy-lab` |
 
@@ -52,8 +52,8 @@ A `purchase` must carry `order_id`, a positive `value`, `currency` and `customer
 ## Database Layers
 
 - `raw_events` — ingested as-is with minimal transformation; source of truth.
-- `clean_events` — validated, normalized, deduplicated by n8n.
-- `leads` — optional, created from `form_submit` events by n8n.
+- `clean_events` — validated, normalized, deduplicated by the worker.
+- `leads` — created from `form_submit` events by the worker.
 
 ## API Rules
 
@@ -97,12 +97,13 @@ Production runs on `dokploy-lab` inside the Proxmox MarTech homelab.
 - Overall funnel conversion rate
 - Lead volume by UTM source/medium
 
-## n8n Pipeline Expectations
+## Worker Pipeline Expectations
 
-- Trigger: new rows in `raw_events`.
-- Outputs: enriched rows in `clean_events`; lead rows in `leads`; optional webhook for high-value leads.
+- Trigger: the worker polls `raw_events` for unprocessed rows every `WORKER_POLL_INTERVAL` seconds.
+- Outputs: enriched rows in `clean_events` (with a derived `source_medium`); lead rows in `leads`.
 - p95 processing latency target: < 60s.
-- Failed/invalid records must be routed to a dead-letter channel (not silently dropped).
+- Failed records are never silently dropped: the error is written to `raw_events.processing_error`
+  and the row is not retried.
 
 ## World instance (synthetic webshop traffic)
 
@@ -153,7 +154,7 @@ inside the compose network. After changing `db/init.sql`, re-apply it to the tes
 
 1. **Phase 0** — Schema, KPI definitions, runbook skeleton
 2. **Phase 1** — Collector API MVP + PostgreSQL + client tracking script
-3. **Phase 2** — n8n dedup/enrichment pipeline
+3. **Phase 2** — Worker dedup/enrichment pipeline
 4. **Phase 3** — Dashboard and funnel reporting
 5. **Phase 4** — Umami integration (secondary validation)
 6. **Phase 5** — Portfolio packaging (README, diagrams, runbook)
