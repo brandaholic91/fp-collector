@@ -21,6 +21,9 @@ SOURCES = [
 
 WEIGHTS = [35, 20, 15, 15, 10, 5]
 
+# Every event carries this, so synthetic rows can be told apart from real traffic.
+SIMULATED = {"simulated": True}
+
 
 def pick_source() -> dict:
     return random.choices(SOURCES, weights=WEIGHTS, k=1)[0]
@@ -42,7 +45,7 @@ def build_journey(source: dict) -> list[dict]:
         **base,
         "event_id": str(uuid.uuid4()),
         "event_name": "page_view",
-        "payload": {},
+        "payload": {**SIMULATED},
     }]
 
     if random.random() < 0.40:
@@ -50,7 +53,7 @@ def build_journey(source: dict) -> list[dict]:
             **base,
             "event_id": str(uuid.uuid4()),
             "event_name": "cta_click",
-            "payload": {"label": "hero_dashboard"},
+            "payload": {"label": "hero_dashboard", **SIMULATED},
         })
 
         if random.random() < 0.25:
@@ -58,7 +61,7 @@ def build_journey(source: dict) -> list[dict]:
                 **base,
                 "event_id": str(uuid.uuid4()),
                 "event_name": "form_submit",
-                "payload": {"email": f"fake_user_{str(uuid.uuid4())[:8]}@example.com"},
+                "payload": {"email": f"fake_user_{str(uuid.uuid4())[:8]}@example.com", **SIMULATED},
             })
 
     return events

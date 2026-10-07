@@ -84,3 +84,10 @@ def test_build_journey_event_ids_are_unique():
             ids = [e["event_id"] for e in journey]
             assert len(ids) == len(set(ids))
             break
+
+
+def test_build_journey_marks_every_event_as_simulated():
+    source = {"utm_source": "google", "utm_medium": "cpc", "utm_campaign": "test"}
+    for _ in range(100):
+        for event in build_journey(source):
+            assert event["payload"]["simulated"] is True
