@@ -77,7 +77,7 @@
     <a href="/" class="font-display text-base sm:text-lg text-fg flex items-center gap-2">
       <span class="text-run">fp</span><span class="text-dim">::</span>collector
     </a>
-    <nav class="flex gap-4 sm:gap-6 text-sm">
+    <nav class="flex gap-3 sm:gap-6 text-sm">
       <a href="/dashboard?utm_source=landing&utm_medium=header&utm_campaign=portfolio_demo"
          onclick="track('cta_click', {label: 'header_dashboard'})"
          class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">dashboard</a>
@@ -96,7 +96,7 @@
           <span class="text-faint">//</span>
           <span>saját méréssel</span>
         </div>
-        <h1 class="font-display text-4xl md:text-6xl leading-[1.1] text-fg">
+        <h1 class="font-display text-[2rem] sm:text-4xl md:text-6xl leading-[1.1] text-fg">
           <span class="text-run glow-run">first_party_data</span><br>
           <span class="text-fg">pipeline, <span class="text-dim">a saját</span></span><br>
           <span class="text-fg">kezedben <span class="cursor"></span></span>
@@ -132,25 +132,25 @@
         <span class="text-faint text-xs font-mono" id="metrics-timestamp">//</span>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="bg-surface border border-outline rounded-sm p-5">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-surface border border-outline rounded-sm p-4 sm:p-5">
           <div class="text-xs font-mono text-faint uppercase tracking-widest">ingested</div>
-          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-live="ingested">—</div>
+          <div class="mt-3 font-display text-xl sm:text-3xl lg:text-4xl text-fg" data-live="ingested">—</div>
           <div class="mt-1 text-xs text-dim font-mono">összes event</div>
         </div>
-        <div class="bg-surface border border-outline rounded-sm p-5">
+        <div class="bg-surface border border-outline rounded-sm p-4 sm:p-5">
           <div class="text-xs font-mono text-faint uppercase tracking-widest">processed</div>
-          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-live="processed">—</div>
+          <div class="mt-3 font-display text-xl sm:text-3xl lg:text-4xl text-fg" data-live="processed">—</div>
           <div class="mt-1 text-xs text-dim font-mono">worker által feldolgozva</div>
         </div>
-        <div class="bg-surface border border-outline rounded-sm p-5">
+        <div class="bg-surface border border-outline rounded-sm p-4 sm:p-5">
           <div class="text-xs font-mono text-faint uppercase tracking-widest">leads</div>
-          <div class="mt-3 font-display text-3xl md:text-4xl text-fg" data-live="leads">—</div>
+          <div class="mt-3 font-display text-xl sm:text-3xl lg:text-4xl text-fg" data-live="leads">—</div>
           <div class="mt-1 text-xs text-dim font-mono">form_submit eventekből</div>
         </div>
-        <div class="bg-surface border border-outline rounded-sm p-5">
+        <div class="bg-surface border border-outline rounded-sm p-4 sm:p-5">
           <div class="text-xs font-mono text-faint uppercase tracking-widest">status</div>
-          <div class="mt-3 font-display text-3xl md:text-4xl flex items-center gap-2" data-live="status">
+          <div class="mt-3 font-display text-xl sm:text-3xl lg:text-4xl flex items-center gap-2" data-live="status">
             <span class="text-dim">—</span>
           </div>
           <div class="mt-1 text-xs text-dim font-mono" data-live="status-detail">ellenőrzés...</div>
@@ -336,11 +336,11 @@
            class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">email</a>
       </nav>
     </div>
-    <div class="mt-8 text-xs text-faint font-mono flex items-center gap-2">
+    <div class="mt-8 text-xs text-faint font-mono flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
       <span>© 2026 fp-collector</span>
-      <span class="text-outline">//</span>
+      <span class="hidden sm:inline text-outline">//</span>
       <span>first-party data, tiszta forrásból</span>
-      <span class="text-outline">//</span>
+      <span class="hidden sm:inline text-outline">//</span>
       <a href="/adatkezeles" class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">adatkezelés</a>
     </div>
   </footer>
