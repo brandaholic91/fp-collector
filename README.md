@@ -79,6 +79,8 @@ Az `ECOMMERCE_ENABLED=true` beállítás négy további eseményt enged be: `vie
 - **Az eszközök összekapcsolódnak.** Ha egy eszközről vásárlás történt, a `resolved_events` nézet az eszköz minden eseményéhez a vásárló azonosítóját rendeli, a vásárlás előttiekhez is.
 - **A worker kötegelve is tud dolgozni.** A `WORKER_BATCHED=true` beállítással 5000 sort dolgoz fel egy tranzakcióban; ha a köteg elbukik, visszavált soronkénti feldolgozásra.
 
+Működés közben a [holikbalazs.hu Mérés oldala](https://holikbalazs.hu/muszerek/events) mutatja be: ott egy szimulált webshop forgalma megy át ezen a pipeline-on, egy különálló, helyi példányon.
+
 ## Kipróbálás helyben
 
 Docker kell hozzá. Az alábbi parancsok egy önálló példányt indítanak e-commerce móddal; az API a `127.0.0.1:18080` címen érhető el.

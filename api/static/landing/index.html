@@ -73,11 +73,11 @@
   </style>
 </head>
 <body class="bg-bg text-fg min-h-screen flex flex-col antialiased">
-  <header class="max-w-5xl w-full mx-auto px-6 pt-8 pb-4 flex items-center justify-between relative z-10 border-b border-muted">
-    <a href="/" class="font-display text-lg text-fg flex items-center gap-2">
+  <header class="max-w-5xl w-full mx-auto px-6 pt-8 pb-4 flex items-center justify-between gap-4 relative z-10 border-b border-muted">
+    <a href="/" class="font-display text-base sm:text-lg text-fg flex items-center gap-2">
       <span class="text-run">fp</span><span class="text-dim">::</span>collector
     </a>
-    <nav class="flex gap-6 text-sm">
+    <nav class="flex gap-4 sm:gap-6 text-sm">
       <a href="/dashboard?utm_source=landing&utm_medium=header&utm_campaign=portfolio_demo"
          onclick="track('cta_click', {label: 'header_dashboard'})"
          class="text-dim hover:text-run transition-colors focus-visible:outline-none focus-visible:text-run">dashboard</a>
@@ -250,7 +250,10 @@
         <p class="mt-6 text-xs text-faint font-mono leading-relaxed">
           &gt; helyben kipróbálható: <a href="https://github.com/brandaholic91/fp-collector#e-commerce-mód"
              onclick="track('cta_click', {label: 'ecommerce_readme'})"
-             class="text-dim hover:text-run underline underline-offset-4 transition-colors">leírás a README-ben</a>.
+             class="text-dim hover:text-run underline underline-offset-4 transition-colors">leírás a README-ben</a>.<br>
+          &gt; működés közben: <a href="https://holikbalazs.hu/muszerek/events"
+             onclick="track('cta_click', {label: 'ecommerce_events_page'})"
+             class="text-dim hover:text-run underline underline-offset-4 transition-colors">a Mérés oldal a holikbalazs.hu-n</a>, szimulált webshop-forgalommal.
         </p>
       </div>
     </section>
@@ -342,7 +345,7 @@
     </div>
   </footer>
 
-  <div id="banner" role="region" aria-label="Adatkezelési beleegyezés" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-run/40 text-fg px-6 py-4 flex flex-wrap items-center gap-4 text-sm font-mono hidden">
+  <div id="banner" role="region" aria-label="Adatkezelési beleegyezés" class="fixed bottom-0 left-0 right-0 bg-surface border-t border-run/40 text-fg px-6 py-4 flex flex-wrap items-center gap-4 text-sm font-mono z-50 hidden">
     <span class="text-run">&gt;</span>
     <span class="flex-1 min-w-[16rem] text-dim">ha elfogadod, az oldal egy véletlen azonosítót tárol a böngésződben, és a saját collector API-jának elküldi, mit nyitottál meg és honnan érkeztél. <a href="/adatkezeles" class="text-run hover:text-pulse underline underline-offset-4">részletek</a></span>
     <button onclick="denyConsent(); hideBanner();"

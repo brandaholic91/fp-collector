@@ -67,7 +67,7 @@
 </head>
 <body class="bg-bg text-fg min-h-screen flex flex-col antialiased">
   <header class="max-w-5xl w-full mx-auto px-6 pt-8 pb-4 flex items-center justify-between relative z-10 border-b border-muted">
-    <a href="/" class="font-display text-lg text-fg flex items-center gap-2">
+    <a href="/" class="font-display text-base sm:text-lg text-fg flex items-center gap-2">
       <span class="text-run">fp</span><span class="text-dim">::</span>collector
     </a>
     <nav class="flex gap-6 text-sm">
@@ -111,7 +111,7 @@
         <dt class="text-fg">visszavonás</dt>
         <dd>
           <button type="button" onclick="withdraw()"
-                  class="text-run hover:text-pulse underline underline-offset-4 focus-visible:outline-none focus-visible:text-pulse">hozzájárulás visszavonása vagy módosítása</button>
+                  class="text-left text-run hover:text-pulse underline underline-offset-4 focus-visible:outline-none focus-visible:text-pulse">hozzájárulás visszavonása vagy módosítása</button>
           — törli az azonosítókat a böngésződből; a főoldal újra megkérdez.
           <span id="withdraw-done" class="hidden block mt-2 text-run" role="status" aria-live="polite">✓ visszavonva, az azonosítók törölve. <a href="/" class="underline underline-offset-4 hover:text-pulse">vissza a főoldalra</a></span>
         </dd>
